@@ -32,7 +32,7 @@ onMounted(async () => {
 	}
 	try {
 		stats.value = (await api.shiftAnalytics(session.shiftName)) as ShiftAnalytics;
-		for (const row of stats.value?.payment_mix ?? []) counted.value[row.mode_of_payment] = row.amount;
+		for (const row of stats.value?.payment_mix ?? []) counted.value[row.mode_of_payment] = expectedOf(row);
 	} catch (error) {
 		ui.fail("Could not load the shift summary", error instanceof Error ? error.message : String(error));
 	} finally {
@@ -40,8 +40,23 @@ onMounted(async () => {
 	}
 });
 
-function variance(mode: string, expected: number) {
-	return toNumber(counted.value[mode]) - expected;
+type MixRow = NonNullable<ShiftAnalytics["payment_mix"]>[number];
+
+/** Una forma de pago en divisa se arquea en esa moneda, no en bolivares. */
+function isForeignRow(row: MixRow | undefined): boolean {
+	return !!row?.foreign_currency && toNumber(row.foreign_amount) !== 0;
+}
+/** Lo que deberia haber en la gaveta: divisa para formas de pago en divisa, moneda local para el resto. */
+function expectedOf(row: MixRow): number {
+	return isForeignRow(row) ? toNumber(row.foreign_amount) : row.amount;
+}
+function fmt(row: MixRow, value: number): string {
+	if (!isForeignRow(row)) return formatCurrency(value);
+	const n = value.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	return `${row.foreign_currency} ${n}`;
+}
+function variance(row: MixRow) {
+	return toNumber(counted.value[row.mode_of_payment]) - expectedOf(row);
 }
 
 async function close() {
@@ -50,9 +65,18 @@ async function close() {
 	try {
 		const draft = (await api.closingShiftFromOpening(session.shiftName)) as Record<string, unknown>;
 		const rows = (draft.payment_reconciliation as Record<string, unknown>[] | undefined) ?? [];
+		const mix = stats.value?.payment_mix ?? [];
 		for (const row of rows) {
 			const mode = row.mode_of_payment as string;
-			if (counted.value[mode] !== undefined) row.closing_amount = toNumber(counted.value[mode]);
+			if (counted.value[mode] === undefined) continue;
+			const entry = mix.find((m) => m.mode_of_payment === mode);
+			const value = toNumber(counted.value[mode]);
+			// La contabilidad va en moneda local: lo contado en divisa se valora a la tasa
+			// promedio de las ventas del turno, asi la diferencia en Bs. es la de la divisa.
+			row.closing_amount =
+				entry && isForeignRow(entry)
+					? Math.round(value * (entry.amount / toNumber(entry.foreign_amount)) * 100) / 100
+					: value;
 		}
 		await api.submitClosingShift(draft);
 		ui.success("Shift closed");
@@ -130,7 +154,12 @@ async function close() {
 							class="flex items-center gap-3 px-4 py-2.5"
 						>
 							<span class="min-w-0 flex-1 truncate text-sm">{{ row.mode_of_payment }}</span>
-							<span class="w-28 text-right text-sm tnum text-muted">{{ formatCurrency(row.amount) }}</span>
+							<span class="w-28 text-right text-sm tnum text-muted">
+								{{ fmt(row, expectedOf(row)) }}
+								<span v-if="isForeignRow(row)" class="block text-[10px] text-subtle"
+									>= {{ formatCurrency(row.amount) }}</span
+								>
+							</span>
 							<input
 								v-model.number="counted[row.mode_of_payment]"
 								type="text"
@@ -141,15 +170,15 @@ async function close() {
 							<span
 								class="w-24 text-right text-xs font-semibold tnum"
 								:class="
-									variance(row.mode_of_payment, row.amount) === 0
+									variance(row) === 0
 										? 'text-subtle'
-										: variance(row.mode_of_payment, row.amount) > 0
+										: variance(row) > 0
 											? 'text-success'
 											: 'text-danger'
 								"
 							>
-								{{ variance(row.mode_of_payment, row.amount) > 0 ? "+" : ""
-								}}{{ formatCurrency(variance(row.mode_of_payment, row.amount)) }}
+								{{ variance(row) > 0 ? "+" : ""
+								}}{{ fmt(row, variance(row)) }}
 							</span>
 						</div>
 					</div>

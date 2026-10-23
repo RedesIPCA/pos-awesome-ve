@@ -251,7 +251,9 @@ def get_shift_analytics(opening_shift):
 
 	payment_mix = frappe.db.sql(
 		"""
-		select sip.mode_of_payment, sum(sip.amount) as amount
+		select sip.mode_of_payment, sum(sip.amount) as amount,
+			sum(coalesce(sip.ve_monto_divisa, 0)) as foreign_amount,
+			max(sip.ve_moneda) as foreign_currency
 		from `tabSales Invoice Payment` sip
 		inner join `tabSales Invoice` si on si.name = sip.parent
 		where si.posa_pos_opening_shift = %s and si.docstatus = 1
@@ -302,7 +304,15 @@ def get_shift_analytics(opening_shift):
 		"total_qty": flt(sales.get("total_qty")),
 		"total_discount": flt(sales.get("discount_amount")),
 		"average_basket": flt(grand_total / invoice_count) if invoice_count else 0.0,
-		"payment_mix": [{"mode_of_payment": r.mode_of_payment, "amount": flt(r.amount)} for r in payment_mix],
+		"payment_mix": [
+			{
+				"mode_of_payment": r.mode_of_payment,
+				"amount": flt(r.amount),
+				"foreign_amount": flt(r.foreign_amount),
+				"foreign_currency": r.foreign_currency or None,
+			}
+			for r in payment_mix
+		],
 		"top_items": [
 			{"item_code": r.item_code, "item_name": r.item_name, "qty": flt(r.qty), "amount": flt(r.amount)}
 			for r in top_items

@@ -231,7 +231,7 @@ export const usePaymentsStore = defineStore("payments", () => {
 		const magnitude = Math.max(Math.abs(toNumber(value)), 0);
 		if (isForeign(mode)) {
 			// Lo digitado es la divisa recibida; el monto de la factura va en moneda local.
-			row.foreign = money(magnitude);
+			row.foreign = money(sign.value * magnitude);
 			row.amount = money(sign.value * magnitude * rateOf(currencyOf(mode)));
 		} else {
 			row.foreign = 0;
@@ -312,6 +312,14 @@ export const usePaymentsStore = defineStore("payments", () => {
 					account: row.account,
 					type: row.type,
 					default: row.default ? 1 : 0,
+					// Divisa realmente recibida: permite arquear la gaveta en esa moneda.
+					...(row.foreign
+						? {
+							  ve_moneda: currencyOf(row.mode_of_payment),
+							  ve_monto_divisa: row.foreign,
+							  ve_tasa: rateOf(currencyOf(row.mode_of_payment)),
+						  }
+						: {}),
 				})),
 			paid_amount: paid.value,
 			change_amount: change.value,

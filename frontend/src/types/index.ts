@@ -341,7 +341,13 @@ export interface ShiftAnalytics {
 	average_basket: number;
 	total_qty: number;
 	total_discount: number;
-	payment_mix: { mode_of_payment: string; amount: number }[];
+	payment_mix: {
+		mode_of_payment: string;
+		amount: number;
+		/** Suma de lo recibido en divisa (con signo) y su moneda; vacio si cobra en moneda local. */
+		foreign_amount?: number;
+		foreign_currency?: string;
+	}[];
 	top_items: { item_code: string; item_name: string; qty: number; amount: number }[];
 	hourly: { hour: number; amount: number; count: number }[];
 	currency: string;
