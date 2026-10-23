@@ -72,11 +72,104 @@ V16_CUSTOM_FIELDS = {
 }
 
 
+# --- Localizacion Venezuela: cobro en divisa, arqueo por moneda y estado por caja ----------
+# Los usa el POS (stores/payments.ts, CloseShiftView.vue) y api/shift.py, asi que viajan con el
+# fork. No se borran al desinstalar: guardan datos contables de facturas ya emitidas (la divisa
+# recibida en cada pago). Para dejar una empresa lista ver posawesome/ve_setup.py.
+ESTADOS_VE = [
+	"Amazonas",
+	"Anzoategui",
+	"Apure",
+	"Aragua",
+	"Barinas",
+	"Bolivar",
+	"Carabobo",
+	"Cojedes",
+	"Delta Amacuro",
+	"Distrito Capital",
+	"Falcon",
+	"Guarico",
+	"La Guaira",
+	"Lara",
+	"Merida",
+	"Miranda",
+	"Monagas",
+	"Nueva Esparta",
+	"Portuguesa",
+	"Sucre",
+	"Tachira",
+	"Trujillo",
+	"Yaracuy",
+	"Zulia",
+]
+
+VE_CUSTOM_FIELDS = {
+	"Mode of Payment": [
+		{
+			"fieldname": "ve_moneda",
+			"label": "Moneda de cobro",
+			"fieldtype": "Select",
+			"options": "VES\nUSD\nEUR",
+			"default": "VES",
+			"insert_after": "type",
+			"description": (
+				"Moneda en que el cliente entrega este medio de pago. "
+				"Si no es VES, el POS convierte a la tasa del dia."
+			),
+		},
+	],
+	"Sales Invoice Payment": [
+		{
+			"fieldname": "ve_moneda",
+			"label": "Moneda recibida",
+			"fieldtype": "Data",
+			"insert_after": "amount",
+			"read_only": 1,
+			"no_copy": 1,
+		},
+		{
+			"fieldname": "ve_monto_divisa",
+			"label": "Monto en divisa",
+			"fieldtype": "Float",
+			"precision": "2",
+			"insert_after": "ve_moneda",
+			"read_only": 1,
+			"no_copy": 1,
+		},
+		{
+			"fieldname": "ve_tasa",
+			"label": "Tasa aplicada",
+			"fieldtype": "Float",
+			"precision": "6",
+			"insert_after": "ve_monto_divisa",
+			"read_only": 1,
+			"no_copy": 1,
+		},
+	],
+	"POS Profile": [
+		{
+			"fieldname": "ve_estado",
+			"label": "Estado (ubicacion de la caja)",
+			"fieldtype": "Select",
+			"options": "\n" + "\n".join(ESTADOS_VE),
+			"insert_after": "warehouse",
+		},
+	],
+}
+
+
+def ensure_ve_custom_fields():
+	"""Crea (o deja igual) los campos ve_*; idempotente."""
+	create_custom_fields(VE_CUSTOM_FIELDS, ignore_validate=True)
+
+
 def after_install():
 	create_custom_fields(V16_CUSTOM_FIELDS, ignore_validate=True)
+	ensure_ve_custom_fields()
 	frappe.db.commit()
 
 
 def after_migrate():
 	create_custom_fields(V16_CUSTOM_FIELDS, ignore_validate=True)
+	ensure_ve_custom_fields()
 	frappe.db.commit()
