@@ -237,6 +237,11 @@ export const usePaymentsStore = defineStore("payments", () => {
 			row.foreign = 0;
 			row.amount = money(sign.value * magnitude);
 		}
+		if (cart.isReturn) {
+			// Un reembolso no puede superar lo adeudado: ERPNext rechaza el sobre-reembolso.
+			const others = rows.value.reduce((sum, r) => (r === row ? sum : sum + toNumber(r.amount)), 0);
+			row.amount = money(Math.max(row.amount, payable.value - others));
+		}
 		touched.value = true;
 	}
 
@@ -332,7 +337,8 @@ export const usePaymentsStore = defineStore("payments", () => {
 			customer_credit_dict: creditApplied.value
 				? credit.value.filter((row) => toNumber(row.credit_to_redeem) > 0)
 				: undefined,
-			credit_change: change.value || undefined,
+			// El vuelto se entrega en efectivo (change_amount). Enviar credit_change lo duplicaba
+			// como anticipo a favor del cliente; no hay casilla para ello, asi que no se envia.
 		};
 
 		return { invoice, data };
