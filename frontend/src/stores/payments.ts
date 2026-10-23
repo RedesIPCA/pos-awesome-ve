@@ -21,6 +21,8 @@ export interface TenderRow {
 	account?: string;
 	type?: string;
 	default: boolean;
+	/** Monto recibido en la divisa de esta forma de pago; 0 si cobra en moneda local. */
+	foreign: number;
 }
 
 export const usePaymentsStore = defineStore("payments", () => {
@@ -38,6 +40,69 @@ export const usePaymentsStore = defineStore("payments", () => {
 	const touched = ref(false);
 	/** The invoice that was just completed, for the success panel and reprint. */
 	const lastInvoice = ref<Record<string, unknown> | null>(null);
+
+	/* ---- Multimoneda -------------------------------------------------------
+	 * `row.amount` SIEMPRE es moneda local (VES): es lo que viaja a ERPNext y lo que
+	 * cuenta para saldo y vuelto. Si la forma de pago es en divisa, el cajero digita
+	 * lo recibido en esa divisa (`row.foreign`) y aqui se convierte a la tasa del dia. */
+	/** Cuantos VES vale 1 unidad de cada divisa (tasa del dia). */
+	const rates = ref<Record<string, number>>({});
+	/** Moneda en la que el cliente entrega cada forma de pago (campo ve_moneda). */
+	const modeCurrency = ref<Record<string, string>>({});
+	let ratesLoadedAt = 0;
+	const RATES_KEY = "posa_ve_rates";
+
+	function currencyOf(mode: string): string {
+		return modeCurrency.value[mode] || session.currency;
+	}
+	function rateOf(currency: string): number {
+		if (currency === session.currency) return 1;
+		return toNumber(rates.value[currency]) || 0;
+	}
+	function isForeign(mode: string): boolean {
+		const currency = currencyOf(mode);
+		return currency !== session.currency && rateOf(currency) > 0;
+	}
+	/** Monto en moneda local expresado en otra moneda, a la tasa del dia. */
+	function equivalent(local: number, currency: string): number {
+		const rate = rateOf(currency);
+		return rate > 0 ? money(Math.abs(local) / rate) : 0;
+	}
+	async function loadRates(force = false) {
+		const fresh = Date.now() - ratesLoadedAt < 15 * 60 * 1000;
+		if (!force && fresh && Object.keys(rates.value).length) return;
+		try {
+			const modes = await api.modesOfPayment();
+			const map: Record<string, string> = {};
+			for (const mode of modes ?? []) if (mode.ve_moneda) map[mode.name] = mode.ve_moneda;
+			const wanted = new Set<string>(["USD", "EUR", ...Object.values(map)]);
+			wanted.delete(session.currency);
+			const next: Record<string, number> = {};
+			for (const currency of wanted) {
+				next[currency] = toNumber(await api.exchangeRate(currency, session.currency));
+			}
+			modeCurrency.value = map;
+			rates.value = next;
+			ratesLoadedAt = Date.now();
+			try {
+				localStorage.setItem(RATES_KEY, JSON.stringify({ map, next }));
+			} catch {
+				/* sin almacenamiento local */
+			}
+		} catch {
+			// Sin conexion: se usan las ultimas tasas conocidas de este equipo.
+			if (Object.keys(rates.value).length) return;
+			try {
+				const cached = JSON.parse(localStorage.getItem(RATES_KEY) ?? "null");
+				if (cached) {
+					modeCurrency.value = cached.map;
+					rates.value = cached.next;
+				}
+			} catch {
+				/* nada guardado */
+			}
+		}
+	}
 
 	/** +1 on a sale, -1 on a return. Money flows the other way on a credit note,
 	 *  so every comparison below has to be taken relative to this. */
@@ -87,6 +152,7 @@ export const usePaymentsStore = defineStore("payments", () => {
 			account: method.account,
 			type: method.type,
 			default: !!method.default,
+			foreign: 0,
 		}));
 		touched.value = false;
 	}
@@ -162,13 +228,25 @@ export const usePaymentsStore = defineStore("payments", () => {
 	function setAmount(mode: string, value: number) {
 		const row = rows.value.find((entry) => entry.mode_of_payment === mode);
 		if (!row) return;
-		row.amount = money(sign.value * Math.max(Math.abs(toNumber(value)), 0));
+		const magnitude = Math.max(Math.abs(toNumber(value)), 0);
+		if (isForeign(mode)) {
+			// Lo digitado es la divisa recibida; el monto de la factura va en moneda local.
+			row.foreign = money(magnitude);
+			row.amount = money(sign.value * magnitude * rateOf(currencyOf(mode)));
+		} else {
+			row.foreign = 0;
+			row.amount = money(sign.value * magnitude);
+		}
 		touched.value = true;
 	}
 
 	function addAmount(mode: string, delta: number) {
 		const row = rows.value.find((entry) => entry.mode_of_payment === mode);
 		if (!row) return;
+		if (isForeign(mode)) {
+			setAmount(mode, Math.abs(row.foreign) + Math.abs(delta));
+			return;
+		}
 		const magnitude = Math.max(Math.abs(row.amount) + Math.abs(delta), 0);
 		row.amount = money(sign.value * magnitude);
 		touched.value = true;
@@ -187,8 +265,23 @@ export const usePaymentsStore = defineStore("payments", () => {
 		target.amount = money(payable.value);
 	}
 
+	/** Cobra el saldo pendiente completo en la divisa de esa forma de pago (redondea al centimo hacia arriba). */
+	function tenderExactIn(mode: string) {
+		if (!isForeign(mode)) {
+			tenderExact(mode);
+			return;
+		}
+		const rate = rateOf(currencyOf(mode));
+		const owed = Math.abs(payable.value);
+		clear();
+		setAmount(mode, Math.ceil((owed / rate) * 100) / 100);
+	}
+
 	function clear() {
-		for (const row of rows.value) row.amount = 0;
+		for (const row of rows.value) {
+			row.amount = 0;
+			row.foreign = 0;
+		}
 	}
 
 	/** Offline-capable, and the thing that failed was the network rather than a rule. */
@@ -198,6 +291,14 @@ export const usePaymentsStore = defineStore("payments", () => {
 
 	/** Everything `submit_invoice` would have received, built from local state. */
 	function buildPayload(draftName?: string) {
+		// Lo recibido en divisas queda anotado en la factura (la contabilidad va en moneda local).
+		const foreignNote = rows.value
+			.filter((row) => Math.abs(row.foreign) > 0)
+			.map((row) => {
+				const currency = currencyOf(row.mode_of_payment);
+				return `${row.mode_of_payment}: ${Math.abs(row.foreign).toFixed(2)} ${currency} @ ${rateOf(currency)} = ${Math.abs(row.amount).toFixed(2)} ${session.currency}`;
+			})
+			.join(" | ");
 		const invoice = {
 			...cart.toInvoicePayload(),
 			name: draftName,
@@ -214,6 +315,7 @@ export const usePaymentsStore = defineStore("payments", () => {
 				})),
 			paid_amount: paid.value,
 			change_amount: change.value,
+			...(foreignNote ? { remarks: `Cobro en divisas: ${foreignNote}` } : {}),
 		};
 
 		const data: Record<string, unknown> = {
@@ -360,7 +462,15 @@ export const usePaymentsStore = defineStore("payments", () => {
 		setAmount,
 		addAmount,
 		tenderExact,
+		tenderExactIn,
 		clear,
 		submit,
+		rates,
+		modeCurrency,
+		loadRates,
+		currencyOf,
+		rateOf,
+		isForeign,
+		equivalent,
 	};
 });

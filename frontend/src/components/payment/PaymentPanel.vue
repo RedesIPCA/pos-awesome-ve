@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** Tender screen. Big targets, tabular numbers, and one obvious primary action. */
-import { computed, watch } from "vue";
+import { computed, onMounted, watch } from "vue";
 import {
 	ArrowLeft,
 	Banknote,
@@ -34,6 +34,21 @@ const done = computed(() => !!payments.lastInvoice);
 /** A sale parked on the terminal: real to the customer, not yet on the server. */
 const queued = computed(() => !!payments.lastInvoice?.__queued);
 const isReturn = computed(() => cart.isReturn);
+
+onMounted(() => void payments.loadRates());
+
+const fx = (n: number) => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const SYMBOL: Record<string, string> = { USD: "$", EUR: "€" };
+/** "$ 3,42 · € 3,05" para un monto en moneda local; vacio si aun no hay tasas. */
+function eq(local: number): string {
+	return ["USD", "EUR"]
+		.filter((c) => payments.rateOf(c) > 0)
+		.map((c) => `${SYMBOL[c]} ${fx(payments.equivalent(local, c))}`)
+		.join(" · ");
+}
+const dueEq = computed(() => eq(payments.payable));
+const changeEq = computed(() => eq(payments.change));
+const leftEq = computed(() => eq(payments.outstanding > 0 ? payments.outstanding : payments.change));
 
 /** Credit only shows when the profile allows it and the customer actually has some. */
 const canUseCredit = computed(
@@ -127,6 +142,7 @@ function openMpesa() {
 					{{ isReturn ? "Over-refunded" : "Change due" }}
 				</p>
 				<p class="mt-0.5 text-3xl font-bold tnum text-warning">{{ formatCurrency(payments.change) }}</p>
+				<p v-if="changeEq" class="mt-1 text-xs tnum text-subtle">≈ {{ changeEq }}</p>
 			</div>
 
 			<div class="mt-2 flex w-full max-w-xs flex-col gap-2">
@@ -172,6 +188,7 @@ function openMpesa() {
 						:class="isReturn && 'text-danger'"
 						>{{ formatCurrency(Math.abs(payments.payable)) }}</span
 					>
+					<span v-if="dueEq" class="block text-[11px] tnum text-subtle">≈ {{ dueEq }}</span>
 				</span>
 			</header>
 
@@ -186,12 +203,20 @@ function openMpesa() {
 						<span class="grid size-9 shrink-0 place-items-center rounded-lg bg-surface-2 text-muted">
 							<Banknote class="size-4" />
 						</span>
-						<label class="min-w-0 flex-1 truncate text-sm font-medium" :for="`pay-${row.mode_of_payment}`">
-							{{ row.mode_of_payment }}
+						<label class="min-w-0 flex-1 text-sm font-medium" :for="`pay-${row.mode_of_payment}`">
+							<span class="block truncate">{{ row.mode_of_payment }}</span>
+							<span
+								v-if="payments.isForeign(row.mode_of_payment)"
+								class="block text-[11px] font-normal tnum text-subtle"
+							>
+								{{ payments.currencyOf(row.mode_of_payment) }} · tasa
+								{{ fx(payments.rateOf(payments.currencyOf(row.mode_of_payment))) }}
+								<template v-if="row.foreign"> · = {{ formatCurrency(Math.abs(row.amount)) }}</template>
+							</span>
 						</label>
 						<input
 							:id="`pay-${row.mode_of_payment}`"
-							:value="row.amount ? Math.abs(row.amount) : ''"
+							:value="payments.isForeign(row.mode_of_payment) ? (row.foreign ? Math.abs(row.foreign) : '') : (row.amount ? Math.abs(row.amount) : '')"
 							type="text"
 							inputmode="decimal"
 							placeholder="0.00"
@@ -199,6 +224,14 @@ function openMpesa() {
 							@focus="($event.target as HTMLInputElement).select()"
 							@input="payments.setAmount(row.mode_of_payment, toNumber(($event.target as HTMLInputElement).value))"
 						/>
+						<button
+							v-if="payments.isForeign(row.mode_of_payment)"
+							type="button"
+							class="h-10 shrink-0 rounded-card border border-accent bg-accent-soft px-2 text-xs font-semibold text-accent transition hover:opacity-85"
+							@click="payments.tenderExactIn(row.mode_of_payment)"
+						>
+							Exacto
+						</button>
 					</div>
 				</div>
 
@@ -354,6 +387,7 @@ function openMpesa() {
 						{{ formatCurrency(payments.outstanding > 0 ? payments.outstanding : payments.change) }}
 					</span>
 				</div>
+				<p v-if="leftEq" class="-mt-1 text-right text-[11px] tnum text-subtle">≈ {{ leftEq }}</p>
 
 				<button
 					type="button"

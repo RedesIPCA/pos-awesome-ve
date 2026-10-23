@@ -227,6 +227,14 @@ export const api = {
 	saveCustomer: (payload: Record<string, unknown>) => call<unknown>(`${NS}.customer.save_customer`, payload),
 	customerAddresses: (customer: string) => call<unknown>(`${NS}.customer.get_customer_addresses`, { customer }),
 	makeAddress: (args: Record<string, unknown>) => call<unknown>(`${NS}.customer.make_address`, { args }),
+	modesOfPayment: () =>
+		call<{ name: string; ve_moneda?: string }[]>("frappe.client.get_list", {
+			doctype: "Mode of Payment",
+			fields: ["name", "ve_moneda"],
+			limit_page_length: 100,
+		}),
+	exchangeRate: (from_currency: string, to_currency: string) =>
+		call<number>("erpnext.setup.utils.get_exchange_rate", { from_currency, to_currency }),
 	availableCredit: (customer: string, company: string) =>
 		call<unknown>(`${NS}.customer.get_available_credit`, { customer, company }),
 	salesPersons: () => call<unknown>(`${NS}.customer.get_sales_person_names`, {}, { method: "GET" }),

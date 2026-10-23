@@ -1,13 +1,25 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { formatCurrency, formatFloat, toNumber } from "@/lib/format";
 import { useCartStore } from "@/stores/cart";
 import { useOffersStore } from "@/stores/offers";
 import { useSessionStore } from "@/stores/session";
+import { usePaymentsStore } from "@/stores/payments";
 
 const cart = useCartStore();
 const offers = useOffersStore();
 const session = useSessionStore();
+const payments = usePaymentsStore();
+
+onMounted(() => void payments.loadRates());
+
+/** Total en USD y EUR a la tasa del dia (solo informativo). */
+const eqTotal = computed(() =>
+	[["USD", "$"], ["EUR", "€"]]
+		.filter(([c]) => payments.rateOf(c) > 0)
+		.map(([c, s]) => `${s} ${payments.equivalent(cart.payableAmount, c).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+		.join(" · "),
+);
 
 const t = computed(() => cart.totals);
 const canDiscount = computed(() => !!session.profile?.posa_allow_user_to_edit_additional_discount);
@@ -81,5 +93,6 @@ function commit(event: Event) {
 			<span class="font-semibold">Total</span>
 			<span class="text-xl font-bold tnum text-accent">{{ formatCurrency(cart.payableAmount) }}</span>
 		</div>
+		<p v-if="eqTotal" class="text-right text-[11px] tnum text-subtle">≈ {{ eqTotal }}</p>
 	</div>
 </template>
