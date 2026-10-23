@@ -8,7 +8,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { api } from "@/lib/api";
-import { money, toNumber } from "@/lib/format";
+import { money, round, toNumber } from "@/lib/format";
 import type { CreditRow, PaymentMethod } from "@/types";
 import { useCartStore } from "./cart";
 import { useSessionStore } from "./session";
@@ -50,6 +50,9 @@ export const usePaymentsStore = defineStore("payments", () => {
 	/** Moneda en la que el cliente entrega cada forma de pago (campo ve_moneda). */
 	const modeCurrency = ref<Record<string, string>>({});
 	let ratesLoadedAt = 0;
+	/** Tasa de IGTF en %, de erpnext_ve; 0 si no esta instalado. */
+	const igtfRate = ref(0);
+	const IGTF_KEY = "posa_ve_igtf";
 	const RATES_KEY = "posa_ve_rates";
 
 	function currencyOf(mode: string): string {
@@ -71,6 +74,21 @@ export const usePaymentsStore = defineStore("payments", () => {
 	async function loadRates(force = false) {
 		const fresh = Date.now() - ratesLoadedAt < 15 * 60 * 1000;
 		if (!force && fresh && Object.keys(rates.value).length) return;
+		try {
+			igtfRate.value = toNumber(await api.igtfRate());
+			try {
+				localStorage.setItem(IGTF_KEY, String(igtfRate.value));
+			} catch {
+				/* sin almacenamiento local */
+			}
+		} catch {
+			// Sin conexion o sin erpnext_ve: ultima tasa conocida de este equipo.
+			try {
+				igtfRate.value = toNumber(localStorage.getItem(IGTF_KEY) ?? 0);
+			} catch {
+				igtfRate.value = 0;
+			}
+		}
 		try {
 			const modes = await api.modesOfPayment();
 			const map: Record<string, string> = {};
@@ -122,12 +140,32 @@ export const usePaymentsStore = defineStore("payments", () => {
 	const redeemed = computed(() =>
 		cart.isReturn ? 0 : money(toNumber(cart.loyaltyAmount) + creditApplied.value),
 	);
-	const payable = computed(() => {
+	/** Precio de la factura por cobrar, sin IGTF. */
+	const priceDue = computed(() => {
 		const gross = cart.payableAmount - redeemed.value;
 		// Only a sale can never fall below zero. A refund's total is negative by
 		// design, and clamping it to zero left nothing to tender — so `canSubmit`,
 		// which wants a non-zero paid amount, refused every refund outright.
 		return money(cart.isReturn ? gross : Math.max(gross, 0));
+	});
+
+	/** IGTF: solo sobre la parte del precio pagada en divisa, y se suma al precio como un impuesto mas.
+	 *  Misma regla que erpnext_ve.events.igtf.apply_igtf: base = min(divisa recibida, precio sin IGTF). */
+	const foreignPaid = computed(() =>
+		rows.value.reduce((sum, row) => (isForeign(row.mode_of_payment) ? sum + Math.abs(toNumber(row.amount)) : sum), 0),
+	);
+	const igtf = computed(() => {
+		if (!igtfRate.value) return 0;
+		const price = cart.totals.grandTotal - redeemed.value;
+		if (!price) return 0;
+		const base = Math.min(foreignPaid.value, Math.abs(price));
+		return money(sign.value * (igtfRate.value / 100) * base);
+	});
+	/** Total a cobrar: precio + IGTF, redondeado igual que el servidor (rounded_total). */
+	const payable = computed(() => {
+		if (!igtf.value) return priceDue.value;
+		const exact = cart.totals.grandTotal - redeemed.value + igtf.value;
+		return money(session.profile?.disable_rounded_total ? exact : round(exact, 0));
 	});
 	/** Signed shortfall: still owed on a sale, still to refund on a return. */
 	const remaining = computed(() => money(payable.value - paid.value));
@@ -277,9 +315,14 @@ export const usePaymentsStore = defineStore("payments", () => {
 			return;
 		}
 		const rate = rateOf(currencyOf(mode));
-		const owed = Math.abs(payable.value);
 		clear();
-		setAmount(mode, Math.ceil((owed / rate) * 100) / 100);
+		// El IGTF depende de lo pagado en divisa: se itera hasta que lo entregado cubra el total con IGTF.
+		for (let attempt = 0; attempt < 5; attempt += 1) {
+			const owed = Math.abs(payable.value);
+			setAmount(mode, Math.ceil((owed / rate) * 100) / 100);
+			const given = Math.abs(rows.value.find((row) => row.mode_of_payment === mode)?.amount ?? 0);
+			if (Math.abs(payable.value) <= given + 0.005) break;
+		}
 	}
 
 	function clear() {
@@ -486,5 +529,8 @@ export const usePaymentsStore = defineStore("payments", () => {
 		rateOf,
 		isForeign,
 		equivalent,
+		igtf,
+		igtfRate,
+		priceDue,
 	};
 });

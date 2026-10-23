@@ -364,6 +364,10 @@ function openMpesa() {
 
 			<!-- Balance + complete -->
 			<footer class="shrink-0 space-y-2 border-t border-line p-3">
+				<div v-if="payments.igtf" class="flex justify-between text-sm">
+					<span class="text-muted">IGTF {{ payments.igtfRate }}% sobre lo pagado en divisa</span>
+					<span class="font-semibold tnum">{{ formatCurrency(Math.abs(payments.igtf)) }}</span>
+				</div>
 				<div class="flex justify-between text-sm">
 					<span class="text-muted">{{ isReturn ? "Refunded" : "Tendered" }}</span>
 					<span class="font-semibold tnum">{{ formatCurrency(Math.abs(payments.paid)) }}</span>

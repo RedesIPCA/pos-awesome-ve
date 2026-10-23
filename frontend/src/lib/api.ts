@@ -233,6 +233,8 @@ export const api = {
 			fields: ["name", "ve_moneda"],
 			limit_page_length: 100,
 		}),
+	/** Tasa de IGTF (%) vigente; la expone erpnext_ve porque VE Settings solo la lee System Manager. */
+	igtfRate: () => call<number>("erpnext_ve.events.igtf.get_igtf_rate"),
 	exchangeRate: (from_currency: string, to_currency: string) =>
 		call<number>("erpnext.setup.utils.get_exchange_rate", { from_currency, to_currency }),
 	availableCredit: (customer: string, company: string) =>
