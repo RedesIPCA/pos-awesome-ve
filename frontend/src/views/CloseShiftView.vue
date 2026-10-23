@@ -6,10 +6,12 @@ import { useRouter } from "vue-router";
 import { api } from "@/lib/api";
 import { formatCurrency, formatDateTime, formatFloat, toNumber } from "@/lib/format";
 import { useSessionStore } from "@/stores/session";
+import { usePaymentsStore } from "@/stores/payments";
 import { useUiStore } from "@/stores/ui";
 import type { ShiftAnalytics } from "@/types";
 
 const session = useSessionStore();
+const payments = usePaymentsStore();
 const ui = useUiStore();
 const router = useRouter();
 
@@ -31,6 +33,7 @@ onMounted(async () => {
 		return;
 	}
 	try {
+		await payments.loadRates();
 		stats.value = (await api.shiftAnalytics(session.shiftName)) as ShiftAnalytics;
 		for (const row of stats.value?.payment_mix ?? []) counted.value[row.mode_of_payment] = expectedOf(row);
 	} catch (error) {
@@ -43,8 +46,15 @@ onMounted(async () => {
 type MixRow = NonNullable<ShiftAnalytics["payment_mix"]>[number];
 
 /** Una forma de pago en divisa se arquea en esa moneda, no en bolivares. */
+/** Moneda de arqueo de una forma de pago en divisa (segun su configuracion); vacio si cobra en moneda local. */
+function foreignCurrencyOf(row: MixRow | undefined): string {
+	if (!row) return "";
+	if (row.foreign_currency) return row.foreign_currency;
+	const configured = payments.currencyOf(row.mode_of_payment);
+	return configured !== session.currency ? configured : "";
+}
 function isForeignRow(row: MixRow | undefined): boolean {
-	return !!row?.foreign_currency && toNumber(row.foreign_amount) !== 0;
+	return !!foreignCurrencyOf(row);
 }
 /** Lo que deberia haber en la gaveta: divisa para formas de pago en divisa, moneda local para el resto. */
 function expectedOf(row: MixRow): number {
@@ -53,7 +63,7 @@ function expectedOf(row: MixRow): number {
 function fmt(row: MixRow, value: number): string {
 	if (!isForeignRow(row)) return formatCurrency(value);
 	const n = value.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-	return `${row.foreign_currency} ${n}`;
+	return `${foreignCurrencyOf(row)} ${n}`;
 }
 function variance(row: MixRow) {
 	return toNumber(counted.value[row.mode_of_payment]) - expectedOf(row);
@@ -71,11 +81,12 @@ async function close() {
 			if (counted.value[mode] === undefined) continue;
 			const entry = mix.find((m) => m.mode_of_payment === mode);
 			const value = toNumber(counted.value[mode]);
+			const basis = entry ? toNumber(entry.foreign_amount) : 0;
 			// La contabilidad va en moneda local: lo contado en divisa se valora a la tasa
 			// promedio de las ventas del turno, asi la diferencia en Bs. es la de la divisa.
 			row.closing_amount =
 				entry && isForeignRow(entry)
-					? Math.round(value * (entry.amount / toNumber(entry.foreign_amount)) * 100) / 100
+					? Math.round(value * (basis !== 0 ? entry.amount / basis : payments.rateOf(foreignCurrencyOf(entry))) * 100) / 100
 					: value;
 		}
 		await api.submitClosingShift(draft);
