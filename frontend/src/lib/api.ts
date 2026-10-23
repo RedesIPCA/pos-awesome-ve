@@ -230,6 +230,14 @@ export const api = {
 	availableCredit: (customer: string, company: string) =>
 		call<unknown>(`${NS}.customer.get_available_credit`, { customer, company }),
 	salesPersons: () => call<unknown>(`${NS}.customer.get_sales_person_names`, {}, { method: "GET" }),
+	customerGroups: () =>
+		call<{ name: string }[]>("frappe.client.get_list", {
+			doctype: "Customer Group",
+			fields: ["name"],
+			filters: { is_group: 0 },
+			order_by: "name asc",
+			limit_page_length: 200,
+		}),
 
 	/* Invoice */
 	updateInvoice: (data: unknown) => call<unknown>(`${NS}.invoice_api.update_invoice`, { data }),

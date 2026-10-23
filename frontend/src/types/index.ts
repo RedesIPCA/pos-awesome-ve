@@ -8,6 +8,8 @@ export interface POSProfile {
 	warehouse: string;
 	selling_price_list: string;
 	customer?: string;
+	/** Estado (Venezuela) donde esta la caja; prellena el estado del cliente nuevo. */
+	ve_estado?: string;
 	cost_center?: string;
 	write_off_account?: string;
 	write_off_cost_center?: string;
