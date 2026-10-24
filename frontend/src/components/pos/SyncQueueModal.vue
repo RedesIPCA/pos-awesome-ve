@@ -21,13 +21,13 @@ onMounted(() => void sync.refresh());
 
 const subtitle = computed(() =>
 	sync.outstanding === 0
-		? "Everything has been sent"
-		: `${sync.outstanding} waiting${sync.failed.length ? ` · ${sync.failed.length} rejected` : ""}`,
+		? "Todo se ha enviado"
+		: `${sync.outstanding} pendientes${sync.failed.length ? ` · ${sync.failed.length} rechazadas` : ""}`,
 );
 
 function discard(uuid: string, label: string) {
 	// eslint-disable-next-line no-alert
-	if (!window.confirm(`Discard the sale for ${label}? The money was already taken; this cannot be undone.`)) {
+	if (!window.confirm(`¿Descartar la venta de ${label}? El dinero ya fue recibido; esto no se puede deshacer.`)) {
 		return;
 	}
 	void sync.discard(uuid);
@@ -35,7 +35,7 @@ function discard(uuid: string, label: string) {
 </script>
 
 <template>
-	<ModalShell title="Waiting to send" :subtitle="subtitle" width="max-w-2xl" @close="ui.closeModal()">
+	<ModalShell title="Pendientes de enviar" :subtitle="subtitle" width="max-w-2xl" @close="ui.closeModal()">
 		<div class="space-y-3 p-4">
 			<div class="flex items-center gap-2">
 				<button
@@ -46,10 +46,10 @@ function discard(uuid: string, label: string) {
 				>
 					<Loader2 v-if="sync.draining" class="size-4 animate-spin" />
 					<RefreshCw v-else class="size-4" />
-					Send now
+					Enviar ahora
 				</button>
 				<span v-if="sync.lastDrainAt" class="text-xs text-subtle">
-					Last tried {{ relativeTime(new Date(sync.lastDrainAt)) }}
+					Último intento {{ relativeTime(new Date(sync.lastDrainAt)) }}
 				</span>
 			</div>
 
@@ -58,9 +58,9 @@ function discard(uuid: string, label: string) {
 				class="flex flex-col items-center justify-center gap-2 py-10 text-center"
 			>
 				<CloudOff class="size-8 text-subtle" />
-				<p class="text-sm font-medium">Nothing waiting</p>
+				<p class="text-sm font-medium">No hay nada pendiente</p>
 				<p class="max-w-xs text-xs text-muted">
-					Sales taken while the connection is down appear here until the server has them.
+					Las ventas hechas sin conexión aparecen aquí hasta que el servidor las reciba.
 				</p>
 			</div>
 
@@ -82,9 +82,9 @@ function discard(uuid: string, label: string) {
 						<p class="truncate text-sm font-medium">{{ row.summary.customer_name }}</p>
 						<p class="text-[11px] text-subtle">
 							{{ row.summary.item_count }}
-							{{ row.summary.item_count === 1 ? "line" : "lines" }} ·
+							{{ row.summary.item_count === 1 ? "línea" : "líneas" }} ·
 							{{ relativeTime(new Date(row.created_at)) }}
-							<span v-if="row.attempts">· {{ row.attempts }} attempts</span>
+							<span v-if="row.attempts">· {{ row.attempts }} intentos</span>
 						</p>
 						<p v-if="row.last_error" class="mt-0.5 text-[11px] text-danger">{{ row.last_error }}</p>
 					</div>
@@ -96,7 +96,7 @@ function discard(uuid: string, label: string) {
 					<button
 						type="button"
 						class="grid size-8 shrink-0 place-items-center rounded-lg text-subtle transition hover:bg-danger-soft hover:text-danger"
-						aria-label="Discard"
+						aria-label="Descartar"
 						@click="discard(row.uuid, row.summary.customer_name)"
 					>
 						<Trash2 class="size-3.5" />

@@ -31,7 +31,7 @@ export class FrappeError extends Error {
 /** Raised before the request leaves the browser when we know we are offline. */
 export class OfflineError extends Error {
 	constructor(readonly method: string) {
-		super(`Offline: ${method}`);
+		super(`Sin conexión: ${method}`);
 		this.name = "OfflineError";
 	}
 }
@@ -167,8 +167,8 @@ async function request<T>(
 		const fallback =
 			(payload as { message?: string } | null)?.message ??
 			(response.status === 403
-				? "You are not permitted to do this."
-				: `Request failed (${response.status})`);
+				? "No tienes permiso para hacer esto."
+				: `La solicitud falló (${response.status})`);
 		throw new FrappeError(firstLine(messages, stripHtml(String(fallback))), {
 			status: response.status,
 			exception,

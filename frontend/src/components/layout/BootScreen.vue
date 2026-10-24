@@ -16,9 +16,9 @@ defineEmits<{ retry: [] }>();
 		</div>
 
 		<div class="max-w-md text-center">
-			<h1 class="text-lg font-semibold">{{ message ? "Cannot start" : "Opening the till" }}</h1>
+			<h1 class="text-lg font-semibold">{{ message ? "No se puede iniciar" : "Abriendo la caja" }}</h1>
 			<p class="mt-1 text-sm text-muted">
-				{{ message || "Loading your shift and profile…" }}
+				{{ message || "Cargando tu turno y perfil…" }}
 			</p>
 		</div>
 
@@ -29,7 +29,7 @@ defineEmits<{ retry: [] }>();
 			@click="$emit('retry')"
 		>
 			<RotateCw class="size-4" />
-			Try again
+			Reintentar
 		</button>
 	</div>
 </template>

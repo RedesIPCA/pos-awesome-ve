@@ -25,13 +25,13 @@ async function apply() {
 			<button
 				type="button"
 				class="grid size-9 place-items-center rounded-card text-muted transition hover:bg-surface-2 hover:text-fg"
-				aria-label="Back to items"
+				aria-label="Volver a los productos"
 				@click="ui.setWorkspace('catalog')"
 			>
 				<ArrowLeft class="size-4.5" />
 			</button>
-			<h2 class="text-sm font-semibold">Coupons</h2>
-			<span class="ml-auto text-xs text-subtle">{{ offers.coupons.length }} applied</span>
+			<h2 class="text-sm font-semibold">Cupones</h2>
+			<span class="ml-auto text-xs text-subtle">{{ offers.coupons.length }} aplicados</span>
 		</header>
 
 		<div class="min-h-0 flex-1 space-y-4 overflow-y-auto p-3">
@@ -39,7 +39,7 @@ async function apply() {
 				<input
 					v-model="code"
 					type="text"
-					placeholder="Enter a coupon code"
+					placeholder="Ingresa un código de cupón"
 					autocomplete="off"
 					class="h-11 min-w-0 flex-1 rounded-card border-line bg-surface font-mono text-sm uppercase shadow-xs focus:border-accent focus:ring-0"
 				/>
@@ -48,12 +48,12 @@ async function apply() {
 					class="h-11 shrink-0 rounded-card bg-accent px-4 text-sm font-semibold text-accent-fg transition hover:bg-accent-hover disabled:bg-surface-3 disabled:text-subtle"
 					:disabled="!code.trim()"
 				>
-					Apply
+					Aplicar
 				</button>
 			</form>
 
 			<div v-if="offers.coupons.length">
-				<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">On this sale</p>
+				<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">En esta venta</p>
 				<ul class="space-y-1.5">
 					<li
 						v-for="(coupon, i) in offers.coupons"
@@ -68,7 +68,7 @@ async function apply() {
 						<button
 							type="button"
 							class="grid size-7 place-items-center rounded-lg text-subtle transition hover:bg-danger-soft hover:text-danger"
-							aria-label="Remove coupon"
+							aria-label="Quitar cupón"
 							@click="offers.removeCoupon(coupon.coupon_code)"
 						>
 							<X class="size-3.5" />
@@ -79,7 +79,7 @@ async function apply() {
 
 			<div v-if="offers.giftCoupons.length">
 				<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Gift coupons for this customer
+					Cupones de regalo para este cliente
 				</p>
 				<ul class="space-y-1.5">
 					<li
@@ -94,7 +94,7 @@ async function apply() {
 							class="shrink-0 rounded-card bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent transition hover:opacity-85"
 							@click="offers.applyCoupon(gift)"
 						>
-							Use
+							Usar
 						</button>
 					</li>
 				</ul>
@@ -104,7 +104,7 @@ async function apply() {
 				v-if="!offers.coupons.length && !offers.giftCoupons.length"
 				class="pt-8 text-center text-xs text-muted"
 			>
-				No coupons on this sale yet.
+				Aún no hay cupones en esta venta.
 			</p>
 		</div>
 	</section>

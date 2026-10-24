@@ -108,14 +108,14 @@ export const useOffersStore = defineStore("offers", () => {
 		}
 
 		for (const title of result.loyaltyOffersApplied) {
-			ui.success("Loyalty points earned", title);
+			ui.success("Puntos de lealtad ganados", title);
 		}
 
 		// Nudge the cashier when something new becomes available.
 		if (pendingCount.value > previousPending) {
 			ui.notify({
-				title: pendingCount.value === 1 ? "An offer is available" : `${pendingCount.value} offers available`,
-				detail: "Open the Offers panel to apply them.",
+				title: pendingCount.value === 1 ? "Hay una oferta disponible" : `Hay ${pendingCount.value} ofertas disponibles`,
+				detail: "Abre el panel de Ofertas para aplicarlas.",
 				tone: "warning",
 			});
 		}
@@ -174,7 +174,7 @@ export const useOffersStore = defineStore("offers", () => {
 		// to be too — otherwise "save10" after "SAVE10" is added a second time.
 		const typed = code.trim().toUpperCase();
 		if (coupons.value.some((coupon) => (coupon.coupon_code ?? "").toUpperCase() === typed)) {
-			ui.warn("That coupon is already on this sale");
+			ui.warn("Ese cupón ya está en esta venta");
 			return;
 		}
 		try {
@@ -199,7 +199,7 @@ export const useOffersStore = defineStore("offers", () => {
 
 			const applied = result?.coupon;
 			if (!applied) {
-				ui.fail("Coupon not valid", result?.msg ?? "That code was not accepted.");
+				ui.fail("Cupón no válido", result?.msg ?? "Ese código no fue aceptado.");
 				return;
 			}
 
@@ -227,9 +227,9 @@ export const useOffersStore = defineStore("offers", () => {
 			// A coupon can unlock a coupon-gated offer, so switch it on immediately.
 			if (offerName) toggle(offerName, true);
 			else refresh();
-			ui.success("Coupon applied", resolvedCode);
+			ui.success("Cupón aplicado", resolvedCode);
 		} catch (error) {
-			ui.fail("Coupon not valid", error instanceof Error ? error.message : String(error));
+			ui.fail("Cupón no válido", error instanceof Error ? error.message : String(error));
 		}
 	}
 

@@ -49,7 +49,7 @@ function commitQty(event: Event) {
 		<div class="flex items-start gap-2">
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center gap-1.5">
-					<Gift v-if="line.posa_is_offer" class="size-3.5 shrink-0 text-violet" title="From an offer" />
+					<Gift v-if="line.posa_is_offer" class="size-3.5 shrink-0 text-violet" title="De una oferta" />
 					<p class="truncate text-sm font-medium leading-tight">{{ line.item_name }}</p>
 				</div>
 				<div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-subtle">
@@ -73,7 +73,7 @@ function commitQty(event: Event) {
 				type="button"
 				class="grid size-7 shrink-0 place-items-center rounded-lg text-subtle opacity-0 transition hover:bg-danger-soft hover:text-danger group-hover:opacity-100"
 				:class="selected && 'opacity-100'"
-				aria-label="Remove line"
+				aria-label="Quitar línea"
 				@click.stop="cart.removeItem(line.posa_row_id)"
 			>
 				<Trash2 class="size-3.5" />
@@ -86,7 +86,7 @@ function commitQty(event: Event) {
 				<button
 					type="button"
 					class="grid size-8 place-items-center rounded-l-card text-muted transition hover:bg-surface-2 hover:text-fg"
-					aria-label="Decrease quantity"
+					aria-label="Disminuir cantidad"
 					@click.stop="cart.stepQty(line.posa_row_id, -1)"
 				>
 					<Minus class="size-3.5" />
@@ -96,7 +96,7 @@ function commitQty(event: Event) {
 					type="text"
 					inputmode="decimal"
 					class="h-8 w-14 border-0 bg-transparent p-0 text-center text-sm font-semibold tnum focus:ring-0"
-					aria-label="Quantity"
+					aria-label="Cantidad"
 					@click.stop
 					@focus="editingQty = true"
 					@change="commitQty"
@@ -105,7 +105,7 @@ function commitQty(event: Event) {
 				<button
 					type="button"
 					class="grid size-8 place-items-center rounded-r-card text-muted transition hover:bg-surface-2 hover:text-fg"
-					aria-label="Increase quantity"
+					aria-label="Aumentar cantidad"
 					@click.stop="cart.stepQty(line.posa_row_id, 1)"
 				>
 					<Plus class="size-3.5" />
@@ -113,7 +113,7 @@ function commitQty(event: Event) {
 			</div>
 
 			<label class="flex items-center gap-1.5 text-[11px] text-subtle">
-				Rate
+				Precio
 				<input
 					:value="formatFloat(line.rate, 2)"
 					type="text"
@@ -126,7 +126,7 @@ function commitQty(event: Event) {
 			</label>
 
 			<label class="flex items-center gap-1.5 text-[11px] text-subtle">
-				Disc %
+				Desc. %
 				<input
 					:value="formatFloat(line.discount_percentage, 2)"
 					type="text"
@@ -148,7 +148,7 @@ function commitQty(event: Event) {
 				v-if="(line.item_uoms?.length ?? 0) > 1"
 				:value="line.uom"
 				class="h-8 rounded-card border-line bg-surface py-0 text-xs shadow-xs focus:border-accent focus:ring-0"
-				aria-label="Unit of measure"
+				aria-label="Unidad de medida"
 				@click.stop
 				@change="cart.setUom(line.posa_row_id, ($event.target as HTMLSelectElement).value)"
 			>
@@ -165,7 +165,7 @@ function commitQty(event: Event) {
 				<input
 					:value="line.posa_notes"
 					type="text"
-					placeholder="Note"
+					placeholder="Nota"
 					class="h-8 min-w-0 flex-1 rounded-card border-line bg-surface text-xs shadow-xs focus:border-accent focus:ring-0"
 					@click.stop
 					@change="cart.setNotes(line.posa_row_id, ($event.target as HTMLInputElement).value)"

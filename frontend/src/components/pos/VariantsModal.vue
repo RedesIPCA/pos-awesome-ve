@@ -24,7 +24,7 @@ onMounted(async () => {
 	try {
 		attributes.value = ((await api.itemAttributes(props.itemCode)) as ItemAttribute[]) ?? [];
 	} catch (error) {
-		ui.fail("Could not load variants", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudieron cargar las variantes", error instanceof Error ? error.message : String(error));
 	} finally {
 		loading.value = false;
 	}
@@ -54,7 +54,7 @@ async function add(item: Item) {
 <template>
 	<ModalShell
 		:title="itemName || itemCode"
-		subtitle="Choose a variant"
+		subtitle="Elige una variante"
 		width="max-w-lg"
 		@close="ui.closeModal()"
 	>
@@ -65,7 +65,7 @@ async function add(item: Item) {
 		<div v-else class="space-y-4 p-4">
 			<div v-for="attr in attributes" :key="attr.attribute">
 				<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					{{ attr.attribute }}<span v-if="attr.optional" class="normal-case"> (optional)</span>
+					{{ attr.attribute }}<span v-if="attr.optional" class="normal-case"> (opcional)</span>
 				</p>
 				<div class="flex flex-wrap gap-1.5">
 					<button
@@ -90,9 +90,9 @@ async function add(item: Item) {
 
 			<div class="border-t border-line pt-3">
 				<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					{{ matches.length }} matching
+					{{ matches.length }} coincidencias
 				</p>
-				<p v-if="!complete" class="text-xs text-muted">Pick a value for every attribute.</p>
+				<p v-if="!complete" class="text-xs text-muted">Elige un valor para cada atributo.</p>
 				<ul v-else-if="matches.length" class="space-y-1.5">
 					<li v-for="item in matches.slice(0, 25)" :key="item.item_code">
 						<button
@@ -112,7 +112,7 @@ async function add(item: Item) {
 				</ul>
 				<div v-else class="flex items-center gap-2 text-xs text-warning">
 					<Layers class="size-4" />
-					No variant matches that combination.
+					Ninguna variante coincide con esa combinación.
 				</div>
 			</div>
 		</div>

@@ -207,17 +207,17 @@ const TIME_STYLE: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-dig
 
 export function formatDate(value?: string | Date | null): string {
 	const date = asDate(value);
-	return date ? date.toLocaleDateString(undefined, DATE_STYLE) : "";
+	return date ? date.toLocaleDateString("es-VE", DATE_STYLE) : "";
 }
 
 export function formatDateTime(value?: string | Date | null): string {
 	const date = asDate(value);
-	return date ? `${date.toLocaleDateString(undefined, DATE_STYLE)}, ${date.toLocaleTimeString(undefined, TIME_STYLE)}` : "";
+	return date ? `${date.toLocaleDateString("es-VE", DATE_STYLE)}, ${date.toLocaleTimeString("es-VE", TIME_STYLE)}` : "";
 }
 
 export function formatTime(value?: string | Date | null): string {
 	const date = asDate(value);
-	return date ? date.toLocaleTimeString(undefined, TIME_STYLE) : "";
+	return date ? date.toLocaleTimeString("es-VE", TIME_STYLE) : "";
 }
 
 function asDate(value?: string | Date | null): Date | null {
@@ -233,7 +233,7 @@ function asDate(value?: string | Date | null): Date | null {
 export function relativeTime(value?: string | Date | null): string {
 	const date = asDate(value);
 	if (!date) return "";
-	const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+	const rtf = new Intl.RelativeTimeFormat("es-VE", { numeric: "auto" });
 	const diffMs = date.getTime() - Date.now();
 	const units: [Intl.RelativeTimeFormatUnit, number][] = [
 		["year", 31_536_000_000],

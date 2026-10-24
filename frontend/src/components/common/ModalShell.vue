@@ -44,7 +44,7 @@ onUnmounted(() => window.removeEventListener("keydown", onKey, { capture: true }
 				<button
 					type="button"
 					class="grid size-7 shrink-0 place-items-center rounded-lg text-subtle transition hover:bg-surface-2 hover:text-fg"
-					aria-label="Close"
+					aria-label="Cerrar"
 					@click="emit('close')"
 				>
 					<X class="size-4" />

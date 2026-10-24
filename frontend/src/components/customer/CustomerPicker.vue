@@ -20,7 +20,7 @@ onMounted(() => {
 });
 
 const current = computed(() => customers.find(cart.customer));
-const label = computed(() => current.value?.customer_name || cart.customer || "Select a customer");
+const label = computed(() => current.value?.customer_name || cart.customer || "Selecciona un cliente");
 
 watch(open, async (isOpen) => {
 	if (!isOpen) return;
@@ -73,13 +73,13 @@ async function choose(name: string) {
 						ref="searchEl"
 						v-model="customers.search"
 						type="search"
-						placeholder="Name, mobile or tax ID…"
+						placeholder="Nombre, celular o RIF…"
 						class="h-10 w-full border-0 bg-transparent pl-9 pr-9 text-sm focus:ring-0"
 					/>
 					<button
 						type="button"
 						class="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full text-subtle hover:bg-surface-2"
-						aria-label="Close"
+						aria-label="Cerrar"
 						@click="open = false"
 					>
 						<X class="size-3.5" />
@@ -88,7 +88,7 @@ async function choose(name: string) {
 
 				<ul class="max-h-72 overflow-y-auto py-1">
 					<li v-if="!customers.filtered.length" class="px-3 py-6 text-center text-xs text-muted">
-						No customer matches.
+						Ningún cliente coincide.
 					</li>
 					<li v-for="entry in customers.filtered" :key="entry.name">
 						<button

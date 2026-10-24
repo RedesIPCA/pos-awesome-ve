@@ -44,22 +44,22 @@ function abandonReturn() {
 	payments.reset();
 	offers.reset();
 	ui.notify({
-		title: "Return cancelled",
-		detail: against ? `Nothing was refunded against ${against}.` : undefined,
+		title: "Devolución cancelada",
+		detail: against ? `No se reembolsó nada contra ${against}.` : undefined,
 		tone: "info",
 	});
 }
 
 async function hold() {
 	if (cart.isEmpty || !cart.customer) {
-		ui.warn(cart.isEmpty ? "The cart is empty" : "Pick a customer first");
+		ui.warn(cart.isEmpty ? "El carrito está vacío" : "Selecciona un cliente primero");
 		return;
 	}
 	holding.value = true;
 	try {
 		const doc = await cart.saveDraft();
 		if (doc) {
-			ui.success("Invoice held", doc.name as string);
+			ui.success("Factura puesta en espera", doc.name as string);
 			cart.reset();
 		}
 	} catch (error) {
@@ -68,12 +68,12 @@ async function hold() {
 		// instead of surfacing a bare "Offline".
 		if (!session.serverReachable) {
 			ui.warn(
-				"Cannot hold while offline",
-				"Holding needs the server. Complete the sale instead — it will be kept on this terminal and sent when the connection returns.",
+				"No se puede poner en espera sin conexión",
+				"Poner en espera requiere el servidor. Completa la venta: se guardará en esta terminal y se enviará cuando vuelva la conexión.",
 			);
 			return;
 		}
-		ui.fail("Could not hold the invoice", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudo poner la factura en espera", error instanceof Error ? error.message : String(error));
 	} finally {
 		holding.value = false;
 	}
@@ -88,8 +88,8 @@ async function hold() {
 				<button
 					type="button"
 					class="grid size-11 shrink-0 place-items-center rounded-card border border-line bg-surface text-muted shadow-xs transition hover:border-accent hover:text-accent"
-					title="New customer"
-					aria-label="New customer"
+					title="Nuevo cliente"
+					aria-label="Nuevo cliente"
 					@click="ui.openModal('customer')"
 				>
 					<UserPlus class="size-4" />
@@ -98,8 +98,8 @@ async function hold() {
 					v-if="cart.customer"
 					type="button"
 					class="grid size-11 shrink-0 place-items-center rounded-card border border-line bg-surface text-muted shadow-xs transition hover:border-accent hover:text-accent"
-					title="Edit customer"
-					aria-label="Edit customer"
+					title="Editar cliente"
+					aria-label="Editar cliente"
 					@click="ui.openModal('customer', { customerId: cart.customer })"
 				>
 					<UserPen class="size-4" />
@@ -116,14 +116,14 @@ async function hold() {
 					class="inline-flex shrink-0 items-center gap-1.5 rounded-card bg-danger-soft px-2.5 py-1.5 text-xs font-semibold text-danger transition hover:opacity-85"
 					@click="abandonReturn"
 				>
-					<X class="size-3.5" /> Cancel return
+					<X class="size-3.5" /> Cancelar devolución
 				</button>
 				<button
 					type="button"
 					class="inline-flex shrink-0 items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-muted transition hover:bg-surface-2 hover:text-fg"
 					@click="ui.openModal('drafts')"
 				>
-					<FileClock class="size-3.5" /> Held <kbd class="font-mono text-[10px] text-subtle">F3</kbd>
+					<FileClock class="size-3.5" /> En espera <kbd class="font-mono text-[10px] text-subtle">F3</kbd>
 				</button>
 				<button
 					v-if="session.profile?.posa_allow_return"
@@ -131,7 +131,7 @@ async function hold() {
 					class="inline-flex shrink-0 items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-muted transition hover:bg-surface-2 hover:text-fg"
 					@click="ui.openModal('returns')"
 				>
-					<Undo2 class="size-3.5" /> Return
+					<Undo2 class="size-3.5" /> Devolución
 				</button>
 				<button
 					v-if="session.profile?.posa_allow_sales_order || session.profile?.custom_allow_select_sales_order"
@@ -139,28 +139,28 @@ async function hold() {
 					class="inline-flex shrink-0 items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-muted transition hover:bg-surface-2 hover:text-fg"
 					@click="ui.openModal('orders')"
 				>
-					<ClipboardList class="size-3.5" /> Orders
+					<ClipboardList class="size-3.5" /> Pedidos
 				</button>
 				<button
 					type="button"
 					class="inline-flex shrink-0 items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-muted transition hover:bg-surface-2 hover:text-fg"
 					@click="ui.setWorkspace('coupons')"
 				>
-					<Ticket class="size-3.5" /> Coupons
+					<Ticket class="size-3.5" /> Cupones
 				</button>
 				<button
 					type="button"
 					class="inline-flex shrink-0 items-center gap-1.5 rounded-card px-2.5 py-1.5 text-xs font-medium text-muted transition hover:bg-surface-2 hover:text-fg"
 					@click="ui.openModal('invoiceDetails')"
 				>
-					<Settings2 class="size-3.5" /> Details
+					<Settings2 class="size-3.5" /> Detalles
 				</button>
 			</div>
 
 			<div class="flex items-center justify-between gap-2 text-xs">
 				<span class="font-medium text-muted">
-					{{ cart.itemCount }} {{ cart.itemCount === 1 ? "line" : "lines" }}
-					<span v-if="cart.dirty && cart.invoiceName" class="text-warning"> · unsaved</span>
+					{{ cart.itemCount }} {{ cart.itemCount === 1 ? "línea" : "líneas" }}
+					<span v-if="cart.dirty && cart.invoiceName" class="text-warning"> · sin guardar</span>
 				</span>
 				<div class="flex items-center gap-1">
 					<button
@@ -170,13 +170,13 @@ async function hold() {
 						@click="ui.setWorkspace('offers')"
 					>
 						<Percent class="size-3" />
-						{{ offers.pendingCount }} offer{{ offers.pendingCount === 1 ? "" : "s" }}
+						{{ offers.pendingCount }} {{ offers.pendingCount === 1 ? "oferta" : "ofertas" }}
 					</button>
 					<span
 						v-else-if="offers.appliedCount"
 						class="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-1 text-[11px] font-semibold text-success"
 					>
-						<Gift class="size-3" /> {{ offers.appliedCount }} applied
+						<Gift class="size-3" /> {{ offers.appliedCount }} aplicadas
 					</span>
 					<button
 						v-if="!cart.isEmpty"
@@ -184,7 +184,7 @@ async function hold() {
 						class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-subtle transition hover:bg-danger-soft hover:text-danger"
 						@click="cart.reset()"
 					>
-						<Trash2 class="size-3" /> Clear
+						<Trash2 class="size-3" /> Vaciar
 					</button>
 				</div>
 			</div>
@@ -200,9 +200,9 @@ async function hold() {
 				class="flex h-full flex-col items-center justify-center gap-2 p-8 text-center"
 			>
 				<ShoppingCart class="size-10 text-subtle" />
-				<p class="text-sm font-medium">Nothing in the cart</p>
+				<p class="text-sm font-medium">El carrito está vacío</p>
 				<p class="max-w-[18rem] text-xs text-muted">
-					Scan a barcode or pick an item to start the sale.
+					Escanea un código de barras o elige un producto para iniciar la venta.
 				</p>
 			</div>
 
@@ -226,8 +226,8 @@ async function hold() {
 			<button
 				type="button"
 				class="flex h-13 w-13 shrink-0 items-center justify-center rounded-card border border-line bg-surface text-muted shadow-xs transition hover:border-warning hover:text-warning disabled:opacity-40"
-				:title="cart.isReturn ? 'A return cannot be held' : 'Hold this invoice'"
-				:aria-label="cart.isReturn ? 'A return cannot be held' : 'Hold this invoice'"
+				:title="cart.isReturn ? 'Una devolución no se puede poner en espera' : 'Poner esta factura en espera'"
+				:aria-label="cart.isReturn ? 'Una devolución no se puede poner en espera' : 'Poner esta factura en espera'"
 				:disabled="!canPay || holding || cart.isReturn"
 				@click="hold"
 			>
@@ -247,7 +247,7 @@ async function hold() {
 			>
 				<Undo2 v-if="cart.isReturn" class="size-5" />
 				<CreditCard v-else class="size-5" />
-				{{ cart.isReturn ? "Refund" : "Pay" }}
+				{{ cart.isReturn ? "Reembolsar" : "Cobrar" }}
 				<kbd class="ml-1 rounded bg-black/15 px-1.5 py-0.5 font-mono text-[11px]">F8</kbd>
 			</button>
 		</footer>

@@ -24,7 +24,7 @@ const groups = computed(() => {
 	>
 		<div class="panel w-full max-w-lg animate-pop-in overflow-hidden shadow-lg">
 			<header class="flex items-center justify-between border-b border-line px-5 py-3">
-				<h2 class="text-sm font-semibold">Keyboard shortcuts</h2>
+				<h2 class="text-sm font-semibold">Atajos de teclado</h2>
 				<button
 					type="button"
 					class="rounded p-1 text-subtle transition hover:bg-surface-2 hover:text-fg"
@@ -35,7 +35,7 @@ const groups = computed(() => {
 			</header>
 
 			<div class="max-h-[60vh] overflow-y-auto p-5">
-				<p v-if="!groups.length" class="text-sm text-muted">No shortcuts registered yet.</p>
+				<p v-if="!groups.length" class="text-sm text-muted">Aún no hay atajos registrados.</p>
 				<div v-for="[group, keys] in groups" :key="group" class="mb-5 last:mb-0">
 					<h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-subtle">{{ group }}</h3>
 					<ul class="space-y-1.5">

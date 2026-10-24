@@ -71,9 +71,9 @@ async function start() {
 				amount: toNumber(balances.value[method.mode_of_payment]),
 			})),
 		});
-		ui.success("Shift open", `${profile.value} is ready.`);
+		ui.success("Turno abierto", `${profile.value} está listo.`);
 	} catch (err) {
-		ui.fail("Could not open the shift", err instanceof Error ? err.message : String(err));
+		ui.fail("No se pudo abrir el turno", err instanceof Error ? err.message : String(err));
 	} finally {
 		starting.value = false;
 	}
@@ -88,8 +88,8 @@ async function start() {
 					<Store class="size-5" />
 				</span>
 				<div>
-					<h1 class="text-base font-semibold">Open a shift</h1>
-					<p class="text-xs text-muted">Declare what is in the drawer to begin.</p>
+					<h1 class="text-base font-semibold">Abrir turno</h1>
+					<p class="text-xs text-muted">Declara lo que hay en la gaveta para comenzar.</p>
 				</div>
 			</div>
 
@@ -105,12 +105,12 @@ async function start() {
 				v-else-if="!profiles.length"
 				class="rounded-card bg-warning-soft p-3 text-sm text-warning"
 			>
-				You are not assigned to any POS Profile. Ask an administrator to add you to one.
+				No tienes ningún Perfil POS asignado. Pide a un administrador que te agregue a uno.
 			</p>
 
 			<form v-else class="space-y-4" @submit.prevent="start">
 				<label class="block">
-					<span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-subtle">Company</span>
+					<span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-subtle">Empresa</span>
 					<select
 						v-model="company"
 						class="h-11 w-full rounded-card border-line bg-surface text-sm focus:border-accent focus:ring-0"
@@ -122,7 +122,7 @@ async function start() {
 				</label>
 
 				<label class="block">
-					<span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-subtle">POS Profile</span>
+					<span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-subtle">Perfil POS</span>
 					<select
 						v-model="profile"
 						class="h-11 w-full rounded-card border-line bg-surface text-sm focus:border-accent focus:ring-0"
@@ -135,7 +135,7 @@ async function start() {
 
 				<div v-if="methods.length">
 					<span class="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-subtle">
-						<Wallet class="size-3.5" /> Opening balance
+						<Wallet class="size-3.5" /> Monto de apertura
 					</span>
 					<div class="space-y-2">
 						<div
@@ -165,7 +165,7 @@ async function start() {
 				>
 					<Loader2 v-if="starting" class="size-5 animate-spin" />
 					<PlayCircle v-else class="size-5" />
-					{{ starting ? "Opening…" : "Start selling" }}
+					{{ starting ? "Abriendo…" : "Comenzar a vender" }}
 				</button>
 			</form>
 		</div>

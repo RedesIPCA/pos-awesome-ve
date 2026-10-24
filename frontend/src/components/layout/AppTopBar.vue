@@ -33,7 +33,7 @@ const initials = computed(() =>
 			</span>
 			<div class="hidden leading-tight sm:block">
 				<p class="text-sm font-semibold">POS Awesome</p>
-				<p class="text-[11px] text-subtle">{{ session.profile?.name || "No profile" }}</p>
+				<p class="text-[11px] text-subtle">{{ session.profile?.name || "Sin perfil" }}</p>
 			</div>
 		</div>
 
@@ -49,7 +49,7 @@ const initials = computed(() =>
 				v-if="cart.isReturn"
 				class="rounded-full bg-danger-soft px-2.5 py-1 text-xs font-semibold text-danger"
 			>
-				Return
+				Devolución
 			</span>
 
 			<!-- Offline invoices. Present whenever the profile allows offline selling, not
@@ -59,8 +59,8 @@ const initials = computed(() =>
 				type="button"
 				class="relative grid size-9 place-items-center rounded-card transition"
 				:class="sync.hasOutstanding ? 'text-warning hover:bg-warning-soft' : 'text-muted hover:bg-surface-2 hover:text-fg'"
-				:title="sync.hasOutstanding ? `${sync.outstanding} offline invoice(s) waiting to send` : 'Offline invoices'"
-				aria-label="Offline invoices"
+				:title="sync.hasOutstanding ? `${sync.outstanding} factura(s) sin conexión pendientes de enviar` : 'Facturas sin conexión'"
+				aria-label="Facturas sin conexión"
 				@click="ui.openModal('queue')"
 			>
 				<CloudOff class="size-4.5" />
@@ -77,8 +77,8 @@ const initials = computed(() =>
 			<button
 				type="button"
 				class="grid size-9 place-items-center rounded-card text-muted transition hover:bg-surface-2 hover:text-fg"
-				title="Keyboard shortcuts"
-				aria-label="Keyboard shortcuts"
+				title="Atajos de teclado"
+				aria-label="Atajos de teclado"
 				@click="ui.shortcutsOpen = true"
 			>
 				<Keyboard class="size-4.5" />
@@ -97,8 +97,8 @@ const initials = computed(() =>
 				<RouterLink
 					to="/close"
 					class="grid size-9 place-items-center rounded-card text-muted transition hover:bg-danger-soft hover:text-danger"
-					title="Close shift"
-					aria-label="Close shift"
+					title="Cerrar turno"
+					aria-label="Cerrar turno"
 				>
 					<LogOut class="size-4.5" />
 				</RouterLink>

@@ -28,8 +28,8 @@ onMounted(() => {
 const stop = registerHotkeys([
 	{
 		combo: "F2",
-		label: "Focus item search",
-		group: "Catalog",
+		label: "Enfocar búsqueda de productos",
+		group: "Catálogo",
 		handler: () => searchEl.value?.select(),
 	},
 ]);
@@ -61,12 +61,12 @@ async function onSubmitSearch() {
 		return;
 	}
 
-	if (!catalog.filtered.length || scale) ui.warn("No item matches", lookup);
+	if (!catalog.filtered.length || scale) ui.warn("Ningún producto coincide", lookup);
 }
 
 async function pick(item: Item) {
 	if (item.has_variants) {
-		ui.notify({ title: "Template item", detail: "Pick a specific variant.", tone: "warning" });
+		ui.notify({ title: "Producto plantilla", detail: "Elige una variante específica.", tone: "warning" });
 		return;
 	}
 	await cart.addItem(item);
@@ -85,7 +85,7 @@ async function pick(item: Item) {
 					type="search"
 					inputmode="search"
 					autocomplete="off"
-					placeholder="Scan a barcode or search items…  (F2)"
+					placeholder="Escanea un código de barras o busca productos…  (F2)"
 					class="h-11 w-full rounded-card border-line bg-surface pl-9 pr-9 text-sm shadow-xs transition placeholder:text-subtle focus:border-accent focus:ring-0"
 					@input="catalog.setSearch(($event.target as HTMLInputElement).value)"
 					@keydown.enter.prevent="onSubmitSearch"
@@ -94,7 +94,7 @@ async function pick(item: Item) {
 					v-if="catalog.search"
 					type="button"
 					class="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full text-subtle transition hover:bg-surface-2 hover:text-fg"
-					aria-label="Clear search"
+					aria-label="Borrar búsqueda"
 					@click="catalog.clearFilters()"
 				>
 					<X class="size-3.5" />
@@ -106,7 +106,7 @@ async function pick(item: Item) {
 					type="button"
 					class="grid size-9 place-items-center rounded-[0.6rem] transition"
 					:class="catalog.viewMode === 'grid' ? 'bg-accent-soft text-accent' : 'text-subtle hover:text-fg'"
-					aria-label="Grid view"
+					aria-label="Vista de cuadrícula"
 					@click="catalog.viewMode = 'grid'"
 				>
 					<LayoutGrid class="size-4" />
@@ -115,7 +115,7 @@ async function pick(item: Item) {
 					type="button"
 					class="grid size-9 place-items-center rounded-[0.6rem] transition"
 					:class="catalog.viewMode === 'list' ? 'bg-accent-soft text-accent' : 'text-subtle hover:text-fg'"
-					aria-label="List view"
+					aria-label="Vista de lista"
 					@click="catalog.viewMode = 'list'"
 				>
 					<List class="size-4" />
@@ -125,8 +125,8 @@ async function pick(item: Item) {
 			<button
 				type="button"
 				class="grid size-10 shrink-0 place-items-center rounded-card border border-line bg-surface text-subtle shadow-xs transition hover:text-fg"
-				title="Reload catalog"
-				aria-label="Reload catalog"
+				title="Recargar catálogo"
+				aria-label="Recargar catálogo"
 				@click="catalog.load({ force: true })"
 			>
 				<RotateCw class="size-4" :class="catalog.loading && 'animate-spin'" />
@@ -165,9 +165,9 @@ async function pick(item: Item) {
 				class="flex h-full flex-col items-center justify-center gap-2 py-16 text-center"
 			>
 				<PackageOpen class="size-8 text-subtle" />
-				<p class="text-sm font-medium">No items found</p>
+				<p class="text-sm font-medium">No se encontraron productos</p>
 				<p class="max-w-xs text-xs text-muted">
-					{{ catalog.search || catalog.activeGroup ? "Try a different search or group." : "This profile has no items yet." }}
+					{{ catalog.search || catalog.activeGroup ? "Prueba con otra búsqueda o grupo." : "Este perfil aún no tiene productos." }}
 				</p>
 				<button
 					v-if="catalog.search || catalog.activeGroup"
@@ -175,7 +175,7 @@ async function pick(item: Item) {
 					class="mt-1 text-xs font-semibold text-accent hover:underline"
 					@click="catalog.clearFilters()"
 				>
-					Clear filters
+					Quitar filtros
 				</button>
 			</div>
 
@@ -206,11 +206,11 @@ async function pick(item: Item) {
 		<!-- Footer status -->
 		<div class="flex items-center justify-between px-1 text-[11px] text-subtle">
 			<span>
-				{{ catalog.filtered.length }} of {{ catalog.items.length }} items
-				<span v-if="catalog.loadedFromCache" class="text-warning"> · cached</span>
+				{{ catalog.filtered.length }} de {{ catalog.items.length }} productos
+				<span v-if="catalog.loadedFromCache" class="text-warning"> · en caché</span>
 			</span>
 			<span v-if="catalog.loading" class="inline-flex items-center gap-1">
-				<Loader2 class="size-3 animate-spin" /> updating
+				<Loader2 class="size-3 animate-spin" /> actualizando
 			</span>
 			<span v-else-if="catalog.lastLoadedAt">{{ relativeTime(new Date(catalog.lastLoadedAt)) }}</span>
 		</div>

@@ -157,7 +157,7 @@ export const useCartStore = defineStore("cart", () => {
 
 	async function addItem(item: Item, options: { qty?: number; uom?: string; batchNo?: string } = {}) {
 		if (isReturn.value) {
-			ui.warn("Return in progress", "Finish or cancel the return before adding new items.");
+			ui.warn("Devolución en curso", "Termina o cancela la devolución antes de agregar productos nuevos.");
 			return;
 		}
 
@@ -286,8 +286,8 @@ export const useCartStore = defineStore("cart", () => {
 		if (next <= line.actual_qty) return true;
 
 		ui.warn(
-			`Only ${line.actual_qty} of ${line.item_name} in stock`,
-			"Enable negative stock in Stock Settings to sell beyond what is on hand.",
+			`Solo hay ${line.actual_qty} de ${line.item_name} en existencia`,
+			"Activa el inventario negativo en la configuración de inventario para vender más de lo disponible.",
 		);
 		return false;
 	}
@@ -297,7 +297,7 @@ export const useCartStore = defineStore("cart", () => {
 		const limit = returnContext.value.maxQty[line.sales_invoice_item ?? ""] ?? Infinity;
 		// Return quantities are negative, so compare magnitudes.
 		if (Math.abs(next) <= Math.abs(limit)) return true;
-		ui.warn(`Cannot return more than ${Math.abs(limit)} of ${line.item_name}`);
+		ui.warn(`No se pueden devolver más de ${Math.abs(limit)} de ${line.item_name}`);
 		return false;
 	}
 
@@ -314,7 +314,7 @@ export const useCartStore = defineStore("cart", () => {
 		const line = items.value.find((item) => item.posa_row_id === rowId);
 		if (!line) return;
 		if (!session.profile?.posa_allow_user_to_edit_rate) {
-			ui.warn("Editing rates is not allowed on this POS profile");
+			ui.warn("Este perfil POS no permite editar precios");
 			return;
 		}
 		line.rate = money(value);
@@ -327,7 +327,7 @@ export const useCartStore = defineStore("cart", () => {
 		const line = items.value.find((item) => item.posa_row_id === rowId);
 		if (!line) return;
 		if (!session.profile?.posa_allow_user_to_edit_item_discount) {
-			ui.warn("Item discounts are not allowed on this POS profile");
+			ui.warn("Este perfil POS no permite descuentos por producto");
 			return;
 		}
 		if (mode === "percentage") line.discount_percentage = value;
@@ -346,7 +346,7 @@ export const useCartStore = defineStore("cart", () => {
 
 		line.discount_percentage = ceiling;
 		applyLineDiscount(line, "percentage");
-		ui.warn(`Maximum discount for ${line.item_name} is ${ceiling}%`);
+		ui.warn(`El descuento máximo para ${line.item_name} es ${ceiling}%`);
 		return false;
 	}
 
@@ -406,7 +406,7 @@ export const useCartStore = defineStore("cart", () => {
 	function removeItem(rowId: string) {
 		const line = items.value.find((item) => item.posa_row_id === rowId);
 		if (line?.posa_is_offer) {
-			ui.warn("This line came from an offer", "Remove the offer instead.");
+			ui.warn("Esta línea proviene de una oferta", "Quita la oferta en su lugar.");
 			return;
 		}
 		items.value = items.value.filter((item) => item.posa_row_id !== rowId);
@@ -425,7 +425,7 @@ export const useCartStore = defineStore("cart", () => {
 			if (additionalDiscount.value || additionalDiscountPercentage.value) return;
 		}
 		if (source === "manual" && !session.profile?.posa_allow_user_to_edit_additional_discount) {
-			ui.warn("Additional discounts are not allowed on this POS profile");
+			ui.warn("Este perfil POS no permite descuentos adicionales");
 			return;
 		}
 		if (mode === "percentage") {
@@ -454,7 +454,7 @@ export const useCartStore = defineStore("cart", () => {
 		loyaltyAmount.value = value;
 		loyaltyPointsRedeemed.value = factor ? Math.floor(value / factor) : 0;
 		if (toNumber(amount) > maxLoyaltyAmount.value)
-			ui.warn("Loyalty amount capped", `Cannot redeem more than ${maxLoyaltyAmount.value}.`);
+			ui.warn("Monto de lealtad limitado", `No se puede canjear más de ${maxLoyaltyAmount.value}.`);
 		markDirty();
 	}
 

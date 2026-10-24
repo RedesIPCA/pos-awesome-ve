@@ -21,7 +21,7 @@ async function load() {
 	try {
 		rows.value = ((await api.draftInvoices(session.shiftName)) as Record<string, unknown>[]) ?? [];
 	} catch (error) {
-		ui.fail("Could not load held invoices", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudieron cargar las facturas en espera", error instanceof Error ? error.message : String(error));
 	} finally {
 		loading.value = false;
 	}
@@ -31,34 +31,34 @@ onMounted(load);
 function resume(doc: Record<string, unknown>) {
 	cart.loadFromDoc(doc);
 	ui.closeModal();
-	ui.success("Invoice resumed", doc.name as string);
+	ui.success("Factura retomada", doc.name as string);
 }
 
 async function discard(doc: Record<string, unknown>) {
 	if (!session.profile?.posa_allow_delete) {
-		ui.warn("Deleting invoices is not allowed on this POS profile");
+		ui.warn("Este perfil POS no permite eliminar facturas");
 		return;
 	}
 	try {
 		await api.deleteInvoice(doc.name as string);
 		rows.value = rows.value.filter((row) => row.name !== doc.name);
-		ui.success("Invoice deleted", doc.name as string);
+		ui.success("Factura eliminada", doc.name as string);
 	} catch (error) {
-		ui.fail("Could not delete", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudo eliminar", error instanceof Error ? error.message : String(error));
 	}
 }
 </script>
 
 <template>
-	<ModalShell title="Held invoices" subtitle="Drafts saved on this shift" width="max-w-xl" @close="ui.closeModal()">
+	<ModalShell title="Facturas en espera" subtitle="Borradores guardados en este turno" width="max-w-xl" @close="ui.closeModal()">
 		<div v-if="loading" class="space-y-2 p-4">
 			<div v-for="n in 4" :key="n" class="skeleton h-14 rounded-card" />
 		</div>
 
 		<div v-else-if="!rows.length" class="flex flex-col items-center gap-2 p-10 text-center">
 			<FileClock class="size-8 text-subtle" />
-			<p class="text-sm font-medium">Nothing on hold</p>
-			<p class="text-xs text-muted">Invoices you park mid-sale show up here.</p>
+			<p class="text-sm font-medium">No hay nada en espera</p>
+			<p class="text-xs text-muted">Las facturas que dejes en espera durante una venta aparecen aquí.</p>
 		</div>
 
 		<ul v-else class="divide-y divide-line">
@@ -78,7 +78,7 @@ async function discard(doc: Record<string, unknown>) {
 				<button
 					type="button"
 					class="grid size-8 shrink-0 place-items-center rounded-lg text-subtle transition hover:bg-danger-soft hover:text-danger"
-					aria-label="Delete draft"
+					aria-label="Eliminar borrador"
 					@click="discard(row)"
 				>
 					<Trash2 class="size-3.5" />

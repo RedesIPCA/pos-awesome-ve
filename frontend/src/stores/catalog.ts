@@ -105,9 +105,9 @@ export const useCatalogStore = defineStore("catalog", () => {
 					indexItems(cached);
 					loadedFromCache.value = true;
 				}
-				if (!items.value.length) ui.fail("Offline", "No cached catalog on this terminal yet.");
+				if (!items.value.length) ui.fail("Sin conexión", "Esta terminal aún no tiene un catálogo en caché.");
 			} else {
-				ui.fail("Could not load items", error instanceof Error ? error.message : String(error));
+				ui.fail("No se pudieron cargar los productos", error instanceof Error ? error.message : String(error));
 			}
 		} finally {
 			loading.value = false;

@@ -40,18 +40,18 @@ function commit(event: Event) {
 <template>
 	<div class="space-y-1.5 border-t border-line px-4 py-3 text-sm">
 		<div class="flex justify-between text-muted">
-			<span>Subtotal <span class="text-subtle">({{ formatFloat(t.totalQty) }} qty)</span></span>
+			<span>Subtotal <span class="text-subtle">({{ formatFloat(t.totalQty) }} cant.)</span></span>
 			<span class="tnum">{{ formatCurrency(t.total) }}</span>
 		</div>
 
 		<div v-if="t.itemDiscountTotal > 0" class="flex justify-between text-success">
-			<span>Item discounts</span>
+			<span>Descuentos por producto</span>
 			<span class="tnum">− {{ formatCurrency(t.itemDiscountTotal) }}</span>
 		</div>
 
 		<div class="flex items-center justify-between gap-2 text-muted">
 			<label :for="'addl-disc'" class="shrink-0">
-				Discount<span class="text-subtle"> (10 or 10%)</span>
+				Descuento<span class="text-subtle"> (10 o 10%)</span>
 			</label>
 			<input
 				id="addl-disc"
@@ -73,7 +73,7 @@ function commit(event: Event) {
 			v-if="offers.invoiceDiscountOverridden"
 			class="rounded-card bg-info-soft px-2 py-1.5 text-[11px] leading-snug text-info"
 		>
-			Your discount is being used instead of the offer's. Clear it to put the offer back.
+			Se está usando tu descuento en lugar del de la oferta. Bórralo para restituir la oferta.
 		</p>
 
 		<div v-for="tax in t.taxes" :key="tax.idx" class="flex justify-between text-muted">
@@ -85,7 +85,7 @@ function commit(event: Event) {
 			v-if="t.roundingAdjustment"
 			class="flex justify-between text-xs text-subtle"
 		>
-			<span>Rounding</span>
+			<span>Redondeo</span>
 			<span class="tnum">{{ formatCurrency(t.roundingAdjustment) }}</span>
 		</div>
 

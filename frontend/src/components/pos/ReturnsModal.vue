@@ -30,7 +30,7 @@ async function search() {
 			>[]) ?? [];
 		searched.value = true;
 	} catch (error) {
-		ui.fail("Search failed", error instanceof Error ? error.message : String(error));
+		ui.fail("La búsqueda falló", error instanceof Error ? error.message : String(error));
 	} finally {
 		searching.value = false;
 	}
@@ -48,14 +48,14 @@ function startReturn(doc: Record<string, unknown>) {
 	payments.tenderExact();
 
 	ui.closeModal();
-	ui.notify({ title: "Return started", detail: `Against ${doc.name}`, tone: "warning" });
+	ui.notify({ title: "Devolución iniciada", detail: `Contra ${doc.name}`, tone: "warning" });
 }
 </script>
 
 <template>
 	<ModalShell
-		title="Return against an invoice"
-		subtitle="Quantities load negative and are capped at what was sold"
+		title="Devolución contra una factura"
+		subtitle="Las cantidades se cargan en negativo y están limitadas a lo vendido"
 		width="max-w-xl"
 		@close="ui.closeModal()"
 	>
@@ -65,7 +65,7 @@ function startReturn(doc: Record<string, unknown>) {
 				<input
 					v-model="term"
 					type="search"
-					placeholder="Invoice number, or leave blank for recent"
+					placeholder="Número de factura, o déjalo en blanco para ver las recientes"
 					class="h-11 w-full rounded-card border-line bg-surface pl-9 text-sm shadow-xs focus:border-accent focus:ring-0"
 				/>
 			</div>
@@ -75,15 +75,15 @@ function startReturn(doc: Record<string, unknown>) {
 				:disabled="searching"
 			>
 				<Loader2 v-if="searching" class="size-4 animate-spin" />
-				<span v-else>Search</span>
+				<span v-else>Buscar</span>
 			</button>
 		</form>
 
 		<div v-if="!rows.length" class="flex flex-col items-center gap-2 p-10 text-center">
 			<Undo2 class="size-8 text-subtle" />
-			<p class="text-sm font-medium">{{ searched ? "No eligible invoice found" : "Search for an invoice" }}</p>
+			<p class="text-sm font-medium">{{ searched ? "No se encontró ninguna factura elegible" : "Busca una factura" }}</p>
 			<p class="max-w-xs text-xs text-muted">
-				Only submitted invoices that have not already been returned can be selected.
+				Solo se pueden seleccionar facturas emitidas que no hayan sido devueltas.
 			</p>
 		</div>
 

@@ -20,7 +20,7 @@ const ui = useUiStore();
 		>
 			<div class="panel flex items-center gap-3 px-5 py-4 shadow-lg">
 				<Loader2 class="size-5 animate-spin text-accent" />
-				<span class="text-sm font-medium">{{ ui.busyLabel || "Working…" }}</span>
+				<span class="text-sm font-medium">{{ ui.busyLabel || "Procesando…" }}</span>
 			</div>
 		</div>
 	</Transition>

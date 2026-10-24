@@ -45,7 +45,7 @@ const tones: Record<ToastTone, string> = {
 				<button
 					type="button"
 					class="rounded p-1 text-subtle transition hover:bg-surface-2 hover:text-fg"
-					aria-label="Dismiss"
+					aria-label="Descartar"
 					@click="ui.dismiss(toast.id)"
 				>
 					<X class="size-3.5" />

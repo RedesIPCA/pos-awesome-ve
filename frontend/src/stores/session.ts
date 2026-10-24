@@ -101,7 +101,7 @@ export const useSessionStore = defineStore("session", () => {
 					applyBootstrap(cached);
 					bootError.value = null;
 				} else {
-					bootError.value = "No connection, and this terminal has no cached shift yet.";
+					bootError.value = "Sin conexión, y esta terminal aún no tiene un turno en caché.";
 				}
 			} else if (error instanceof FrappeError && error.isAuthError) {
 				window.location.href = `/login?redirect-to=${encodeURIComponent("/posawesome")}`;

@@ -18,11 +18,11 @@ const LoadFailed: Component = {
 				"div",
 				{ class: "fixed inset-0 z-50 grid place-items-center bg-overlay p-4", role: "dialog" },
 				h("div", { class: "panel max-w-sm p-5 text-center" }, [
-					h("p", { class: "text-sm font-semibold" }, "Could not open that dialog"),
+					h("p", { class: "text-sm font-semibold" }, "No se pudo abrir ese cuadro de diálogo"),
 					h(
 						"p",
 						{ class: "mt-1 text-xs text-muted" },
-						"It could not be downloaded. Check the connection, then try again.",
+						"No se pudo descargar. Revisa la conexión e inténtalo de nuevo.",
 					),
 					h(
 						"button",
@@ -32,7 +32,7 @@ const LoadFailed: Component = {
 								"mt-4 h-10 w-full rounded-card bg-accent text-sm font-semibold text-accent-fg",
 							onClick: () => ui.closeModal(),
 						},
-						"Close",
+						"Cerrar",
 					),
 				]),
 			);

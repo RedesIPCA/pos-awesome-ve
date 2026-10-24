@@ -307,6 +307,9 @@ def make_address(args):
 		}
 	)
 	address.insert()
+	# La direccion creada desde el POS es la principal del cliente (la usan las facturas y su ficha).
+	frappe.db.set_value("Customer", args.get("customer"), "customer_primary_address", address.name)
+	frappe.db.set_value("Address", address.name, "is_primary_address", 1)
 	return address
 
 

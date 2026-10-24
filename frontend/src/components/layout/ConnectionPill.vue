@@ -18,9 +18,9 @@ const sync = useSyncStore();
 const ui = useUiStore();
 
 const state = computed(() => {
-	if (session.serverReachable) return { label: "Online", tone: "text-success bg-success-soft", icon: Cloud };
-	if (session.canWorkOffline) return { label: "Offline", tone: "text-warning bg-warning-soft", icon: CloudOff };
-	return { label: "No connection", tone: "text-danger bg-danger-soft", icon: CloudOff };
+	if (session.serverReachable) return { label: "En línea", tone: "text-success bg-success-soft", icon: Cloud };
+	if (session.canWorkOffline) return { label: "Sin conexión", tone: "text-warning bg-warning-soft", icon: CloudOff };
+	return { label: "Desconectado", tone: "text-danger bg-danger-soft", icon: CloudOff };
 });
 
 function onClick() {
@@ -39,10 +39,10 @@ function onClick() {
 		:class="state.tone"
 		:title="
 			sync.hasOutstanding
-				? `${sync.outstanding} sale(s) waiting to send`
+				? `${sync.outstanding} venta(s) pendientes de enviar`
 				: session.serverReachable
-					? 'Connected'
-					: 'Click to retry'
+					? 'Conectado'
+					: 'Clic para reintentar'
 		"
 		@click="onClick"
 	>

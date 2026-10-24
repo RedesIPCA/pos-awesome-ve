@@ -71,7 +71,7 @@ async function search() {
 			payment_methods_list: modes.value.length ? JSON.stringify(modes.value) : undefined,
 		})) ?? []) as MpesaPayment[];
 	} catch (error) {
-		ui.fail("Could not load M-Pesa payments", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudieron cargar los pagos de M-Pesa", error instanceof Error ? error.message : String(error));
 		rows.value = [];
 	} finally {
 		loading.value = false;
@@ -88,35 +88,35 @@ async function search() {
  */
 async function attach(row: MpesaPayment) {
 	if (!cart.customer) {
-		ui.warn("Pick a customer first", "An M-Pesa payment has to be attached to an account.");
+		ui.warn("Selecciona un cliente primero", "Un pago de M-Pesa debe asociarse a una cuenta.");
 		return;
 	}
 	submitting.value = row.name;
 	try {
 		await api.submitMpesaPayment({ mpesa_payment: row.name, customer: cart.customer });
-		ui.success("M-Pesa payment attached", `${row.transid} · ${formatCurrency(row.amount)}`);
+		ui.success("Pago de M-Pesa asociado", `${row.transid} · ${formatCurrency(row.amount)}`);
 		await payments.loadCredit();
 		payments.applyMaxCredit();
 		ui.closeModal();
 	} catch (error) {
-		ui.fail("Could not attach the payment", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudo asociar el pago", error instanceof Error ? error.message : String(error));
 	} finally {
 		submitting.value = null;
 	}
 }
 
 const subtitle = computed(() =>
-	cart.customer ? `Attaching to ${cart.customerInfo?.customer_name ?? cart.customer}` : "Pick a customer first",
+	cart.customer ? `Asociando a ${cart.customerInfo?.customer_name ?? cart.customer}` : "Selecciona un cliente primero",
 );
 </script>
 
 <template>
-	<ModalShell title="M-Pesa payments" :subtitle="subtitle" width="max-w-2xl" @close="ui.closeModal()">
+	<ModalShell title="Pagos de M-Pesa" :subtitle="subtitle" width="max-w-2xl" @close="ui.closeModal()">
 		<div class="space-y-3 p-4">
 			<div class="flex flex-wrap items-end gap-2">
 				<label class="min-w-0 flex-1">
 					<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-						Mobile
+						Celular
 					</span>
 					<input
 						v-model="mobile"
@@ -129,12 +129,12 @@ const subtitle = computed(() =>
 				</label>
 				<label class="min-w-0 flex-1">
 					<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-						Name
+						Nombre
 					</span>
 					<input
 						v-model="name"
 						type="text"
-						placeholder="As it came through"
+						placeholder="Tal como llegó"
 						class="h-10 w-full rounded-card border-line bg-surface text-sm focus:border-accent focus:ring-0"
 						@keydown.enter.prevent="search"
 					/>
@@ -145,12 +145,12 @@ const subtitle = computed(() =>
 					@click="search"
 				>
 					<Search class="size-4" />
-					Search
+					Buscar
 				</button>
 				<button
 					type="button"
 					class="grid size-10 shrink-0 place-items-center rounded-card border border-line text-subtle transition hover:text-fg"
-					aria-label="Reload"
+					aria-label="Recargar"
 					@click="search"
 				>
 					<RefreshCw class="size-4" :class="loading && 'animate-spin'" />
@@ -166,10 +166,10 @@ const subtitle = computed(() =>
 				class="flex flex-col items-center justify-center gap-2 py-10 text-center"
 			>
 				<Smartphone class="size-8 text-subtle" />
-				<p class="text-sm font-medium">No unreconciled payments</p>
+				<p class="text-sm font-medium">No hay pagos sin conciliar</p>
 				<p class="max-w-xs text-xs text-muted">
-					Only transactions that have arrived and not yet been attached to a customer show
-					here.
+					Aquí solo se muestran las transacciones que ya llegaron y que aún no se han asociado a
+					un cliente.
 				</p>
 			</div>
 
@@ -198,7 +198,7 @@ const subtitle = computed(() =>
 						@click="attach(row)"
 					>
 						<Loader2 v-if="submitting === row.name" class="size-4 animate-spin" />
-						<span v-else>Attach</span>
+						<span v-else>Asociar</span>
 					</button>
 				</li>
 			</ul>

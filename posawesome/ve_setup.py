@@ -141,3 +141,60 @@ def _asignar_a_perfil(perfil, nombres, estado):
 		doc.payments[0].default = 1
 	doc.save()
 	return True
+
+
+# Roles con los que se probo la caja (venta, devolucion, cierre). Se pueden cambiar con ``roles``.
+ROLES_CAJERO = ["Sales User", "Accounts User", "Stock User", "Sales Manager"]
+
+
+def crear_cajeros(cajeros, perfiles, roles=None):
+	"""Crea (o actualiza) usuarios cajeros y los asigna a los POS Profile indicados.
+
+	``cajeros``: lista de ``{"email": ..., "nombre": ...}``. No se guarda ni se muestra ninguna clave:
+	por cada usuario NUEVO se devuelve un enlace de un solo uso para que el cajero fije la suya.
+
+	Uso, en el servidor::
+
+	    bench --site SITIO execute posawesome.ve_setup.crear_cajeros \
+	        --kwargs "{'cajeros': [{'email': 'ana@tienda.com', 'nombre': 'Ana Perez'}], 'perfiles': ['Caja 1']}"
+	"""
+	roles = roles or ROLES_CAJERO
+	resumen = {"creados": {}, "existentes": [], "perfiles": []}
+
+	for cajero in cajeros:
+		email = cajero["email"].strip().lower()
+		if frappe.db.exists("User", email):
+			user = frappe.get_doc("User", email)
+			resumen["existentes"].append(email)
+		else:
+			nombre = (cajero.get("nombre") or email.split("@")[0]).strip()
+			primero, _sep, resto = nombre.partition(" ")
+			user = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": email,
+					"first_name": primero,
+					"last_name": resto,
+					"enabled": 1,
+					"user_type": "System User",
+					"send_welcome_email": 0,
+				}
+			)
+			user.insert(ignore_permissions=True)
+			resumen["creados"][email] = user.reset_password(send_email=False)
+		presentes = {fila.role for fila in user.roles}
+		faltan = [r for r in roles if r not in presentes]
+		for rol in faltan:
+			user.append("roles", {"role": rol})
+		if faltan:
+			user.save(ignore_permissions=True)
+
+		for perfil in perfiles:
+			doc = frappe.get_doc("POS Profile", perfil)
+			if not any(fila.user == email for fila in doc.applicable_for_users):
+				doc.append("applicable_for_users", {"user": email})
+				doc.save()
+				resumen["perfiles"].append(f"{email} -> {perfil}")
+
+	frappe.db.commit()
+	return resumen

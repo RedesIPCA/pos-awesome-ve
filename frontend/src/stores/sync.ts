@@ -143,7 +143,7 @@ export const useSyncStore = defineStore("sync", () => {
 		const queue = [...pending.value, ...failed.value].sort((a, b) => a.created_at - b.created_at);
 		if (!queue.length) return [];
 		if (!(await session.probe())) {
-			if (!options.silent) ui.warn("Still offline", "The queue will send itself when the connection returns.");
+			if (!options.silent) ui.warn("Sigue sin conexión", "La cola se enviará sola cuando vuelva la conexión.");
 			return [];
 		}
 
@@ -172,7 +172,7 @@ export const useSyncStore = defineStore("sync", () => {
 					);
 					await refresh();
 					if (!options.silent) {
-						ui.fail("Could not send the queue", error instanceof Error ? error.message : String(error));
+						ui.fail("No se pudo enviar la cola", error instanceof Error ? error.message : String(error));
 					}
 					return all;
 				}
@@ -203,7 +203,7 @@ export const useSyncStore = defineStore("sync", () => {
 					if (answered.has(row.uuid)) continue;
 					await updateQueueEntry(row.uuid, {
 						status: "pending",
-						last_error: "The server did not report on this entry; it will be retried.",
+						last_error: "El servidor no informó sobre este registro; se reintentará.",
 					});
 				}
 			}
@@ -225,13 +225,13 @@ export const useSyncStore = defineStore("sync", () => {
 
 		if (sent) {
 			ui.success(
-				sent === 1 ? "1 offline sale sent" : `${sent} offline sales sent`,
-				broke.length ? `${broke.length} still need attention` : undefined,
+				sent === 1 ? "1 venta sin conexión enviada" : `${sent} ventas sin conexión enviadas`,
+				broke.length ? `${broke.length} requieren atención` : undefined,
 			);
 		}
 		if (broke.length) {
 			ui.fail(
-				broke.length === 1 ? "An offline sale was rejected" : `${broke.length} offline sales were rejected`,
+				broke.length === 1 ? "Una venta sin conexión fue rechazada" : `${broke.length} ventas sin conexión fueron rechazadas`,
 				broke[0]?.error,
 			);
 		}

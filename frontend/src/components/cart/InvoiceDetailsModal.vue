@@ -80,11 +80,11 @@ function applyCharge(name: string | null) {
 </script>
 
 <template>
-	<ModalShell title="Invoice details" width="max-w-md" @close="ui.closeModal()">
+	<ModalShell title="Detalles de la factura" width="max-w-md" @close="ui.closeModal()">
 		<div class="grid gap-3 p-4 sm:grid-cols-2">
 			<label v-if="session.profile?.posa_allow_change_posting_date" class="block">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Posting date
+					Fecha de contabilización
 				</span>
 				<input
 					v-model="cart.postingDate"
@@ -94,7 +94,7 @@ function applyCharge(name: string | null) {
 			</label>
 
 			<label class="block">
-				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">Due date</span>
+				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">Fecha de vencimiento</span>
 				<input
 					v-model="cart.dueDate"
 					type="date"
@@ -104,7 +104,7 @@ function applyCharge(name: string | null) {
 
 			<label v-if="session.profile?.posa_allow_customer_purchase_order" class="block sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Customer PO number
+					Nro. de orden de compra del cliente
 				</span>
 				<input
 					v-model="cart.poNumber"
@@ -115,7 +115,7 @@ function applyCharge(name: string | null) {
 
 			<label v-if="session.profile?.posa_allow_sales_order" class="block sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Delivery date
+					Fecha de entrega
 				</span>
 				<input
 					v-model="cart.deliveryDate"
@@ -123,13 +123,13 @@ function applyCharge(name: string | null) {
 					class="h-10 w-full rounded-card border-line bg-surface text-sm focus:border-accent focus:ring-0"
 				/>
 				<span class="mt-1 block text-[11px] text-muted">
-					A delivery date turns this into a sales order, so stock is not moved now.
+					Una fecha de entrega convierte esto en un pedido de venta, por lo que el inventario no se mueve ahora.
 				</span>
 			</label>
 
 			<label v-if="customers.salesPersons.length" class="block sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Sales person
+					Vendedor
 				</span>
 				<select
 					v-model="cart.salesPerson"
@@ -144,7 +144,7 @@ function applyCharge(name: string | null) {
 
 			<label v-if="customers.addresses.length" class="block sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Shipping address
+					Dirección de envío
 				</span>
 				<select
 					v-model="cart.shippingAddress"
@@ -163,25 +163,25 @@ function applyCharge(name: string | null) {
 
 			<label v-if="useDelivery && charges.length" class="block sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Delivery charge
+					Cargo de entrega
 				</span>
 				<select
 					:value="cart.deliveryCharges"
 					class="h-10 w-full rounded-card border-line bg-surface text-sm focus:border-accent focus:ring-0"
 					@change="applyCharge(($event.target as HTMLSelectElement).value || null)"
 				>
-					<option value="">None</option>
+					<option value="">Ninguno</option>
 					<option v-for="row in charges" :key="row.name" :value="row.name">
 						{{ row.shipping_rule || row.name }} · {{ formatCurrency(chargeRate(row)) }}
 					</option>
 				</select>
 				<span v-if="cart.deliveryChargesRate" class="mt-1 block text-[11px] tnum text-muted">
-					Adds {{ formatCurrency(cart.deliveryChargesRate) }} to this invoice
+					Suma {{ formatCurrency(cart.deliveryChargesRate) }} a esta factura
 				</span>
 			</label>
 
 			<label class="block sm:col-span-2">
-				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">Notes</span>
+				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">Notas</span>
 				<textarea
 					v-model="cart.notes"
 					rows="3"
@@ -196,7 +196,7 @@ function applyCharge(name: string | null) {
 				class="h-11 w-full rounded-card bg-accent font-semibold text-accent-fg transition hover:bg-accent-hover"
 				@click="ui.closeModal()"
 			>
-				Done
+				Listo
 			</button>
 		</template>
 	</ModalShell>

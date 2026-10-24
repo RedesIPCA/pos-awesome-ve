@@ -144,9 +144,9 @@ function print() {
 </script>
 
 <template>
-	<ModalShell title="Print receipt" :subtitle="invoiceName" width="max-w-3xl" @close="ui.closeModal()">
+	<ModalShell title="Imprimir recibo" :subtitle="invoiceName" width="max-w-3xl" @close="ui.closeModal()">
 		<div v-if="loading" class="flex items-center justify-center gap-2 p-10 text-sm text-muted">
-			<Loader2 class="size-4 animate-spin" /> Preparing the receipt…
+			<Loader2 class="size-4 animate-spin" /> Preparando el recibo…
 		</div>
 
 		<template v-else>
@@ -155,7 +155,7 @@ function print() {
 				class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-5 py-3"
 			>
 				<label v-if="formats.length" class="flex items-center gap-1.5 text-xs font-medium text-muted">
-					Format
+					Formato
 					<select
 						v-model="printFormat"
 						class="h-9 rounded-card border-line bg-surface py-0 text-xs shadow-xs focus:border-accent focus:ring-0"
@@ -165,18 +165,18 @@ function print() {
 				</label>
 
 				<label v-if="letterheads.length" class="flex items-center gap-1.5 text-xs font-medium text-muted">
-					Letter head
+					Membrete
 					<select
 						v-model="letterhead"
 						class="h-9 rounded-card border-line bg-surface py-0 text-xs shadow-xs focus:border-accent focus:ring-0"
 					>
-						<option value="">None</option>
+						<option value="">Ninguno</option>
 						<option v-for="head in letterheads" :key="head" :value="head">{{ head }}</option>
 					</select>
 				</label>
 
 				<span v-if="rendering" class="ms-auto inline-flex items-center gap-1.5 text-xs text-subtle">
-					<Loader2 class="size-3.5 animate-spin" /> rendering
+					<Loader2 class="size-3.5 animate-spin" /> generando
 				</span>
 			</div>
 
@@ -186,7 +186,7 @@ function print() {
 			>
 				<TriangleAlert class="mt-0.5 size-4 shrink-0" />
 				<div>
-					<p class="font-semibold">Could not render this format</p>
+					<p class="font-semibold">No se pudo generar este formato</p>
 					<p class="mt-0.5 text-xs opacity-90">{{ error }}</p>
 				</div>
 			</div>
@@ -195,7 +195,7 @@ function print() {
 			<iframe
 				v-else
 				ref="frame"
-				title="Receipt preview"
+				title="Vista previa del recibo"
 				class="h-[52vh] w-full border-0 bg-white"
 				:srcdoc="html"
 				@load="onFrameLoad"
@@ -209,7 +209,7 @@ function print() {
 					class="inline-flex h-11 items-center justify-center rounded-card border border-line px-4 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-fg"
 					@click="ui.closeModal()"
 				>
-					Close
+					Cerrar
 				</button>
 				<button
 					type="button"
@@ -219,7 +219,7 @@ function print() {
 				>
 					<Loader2 v-if="loading || rendering" class="size-4 animate-spin" />
 					<Printer v-else class="size-4" />
-					{{ loading || rendering ? "Preparing…" : "Print" }}
+					{{ loading || rendering ? "Preparando…" : "Imprimir" }}
 				</button>
 			</div>
 		</template>

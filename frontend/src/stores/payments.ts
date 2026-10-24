@@ -401,9 +401,9 @@ export const usePaymentsStore = defineStore("payments", () => {
 			// Nothing is holding this sale now — not the server, not the terminal. The
 			// cashier has to know before the customer walks away.
 			ui.notify({
-				title: "This sale was NOT saved",
+				title: "Esta venta NO se guardó",
 				detail:
-					"No connection, and this terminal cannot store it either. Do not hand over the goods — write the sale down and re-enter it once the connection is back.",
+					"No hay conexión y esta terminal tampoco puede guardarla. No entregues la mercancía: anota la venta y regístrala de nuevo cuando vuelva la conexión.",
 				tone: "danger",
 				duration: 0,
 			});
@@ -425,8 +425,8 @@ export const usePaymentsStore = defineStore("payments", () => {
 		});
 		lastInvoice.value = { name: uuid, __queued: true };
 		ui.warn(
-			"Held on this terminal",
-			"No connection. It sends itself as soon as the network is back — take the money and hand over the goods.",
+			"Guardada en esta terminal",
+			"Sin conexión. Se envía sola en cuanto vuelva la red: recibe el dinero y entrega la mercancía.",
 		);
 		return lastInvoice.value;
 	}
@@ -447,7 +447,7 @@ export const usePaymentsStore = defineStore("payments", () => {
 				const draft = await cart.saveDraft();
 				draftName = draft?.name as string | undefined;
 				if (!draftName) {
-					ui.fail("Could not save the invoice");
+					ui.fail("No se pudo guardar la factura");
 					return null;
 				}
 				if (!touched.value) {
@@ -477,13 +477,13 @@ export const usePaymentsStore = defineStore("payments", () => {
 
 			lastInvoice.value = result;
 			ui.success(
-				cart.isReturn ? "Refund complete" : "Sale complete",
-				`${result.name ?? draftName}${change.value ? ` · change ${change.value}` : ""}`,
+				cart.isReturn ? "Reembolso completado" : "Venta completada",
+				`${result.name ?? draftName}${change.value ? ` · vuelto ${change.value}` : ""}`,
 			);
 			return result;
 		} catch (error) {
 			ui.fail(
-				cart.isReturn ? "Could not complete the refund" : "Could not complete the sale",
+				cart.isReturn ? "No se pudo completar el reembolso" : "No se pudo completar la venta",
 				error instanceof Error ? error.message : String(error),
 			);
 			return null;

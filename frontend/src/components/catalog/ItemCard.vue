@@ -48,7 +48,7 @@ const outOfStock = computed(
 			<span
 				v-if="item.has_batch_no || item.has_serial_no"
 				class="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-surface/85 text-subtle backdrop-blur-sm"
-				:title="item.has_serial_no ? 'Serialised' : 'Batched'"
+				:title="item.has_serial_no ? 'Con número de serie' : 'Con lote'"
 			>
 				<Hash v-if="item.has_serial_no" class="size-3" />
 				<Layers v-else class="size-3" />

@@ -55,7 +55,7 @@ export const useCustomerStore = defineStore("customers", () => {
 			if (session.offlineEnabled) void cacheCustomers(session.profile.name, customers.value);
 		} catch (error) {
 			if (!(error instanceof OfflineError || error instanceof TypeError)) {
-				ui.fail("Could not load customers", error instanceof Error ? error.message : String(error));
+				ui.fail("No se pudieron cargar los clientes", error instanceof Error ? error.message : String(error));
 			}
 		} finally {
 			loading.value = false;

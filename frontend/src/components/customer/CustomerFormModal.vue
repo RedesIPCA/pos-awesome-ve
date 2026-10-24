@@ -78,13 +78,13 @@ async function copyCode() {
 		copied.value = true;
 		setTimeout(() => (copied.value = false), 1500);
 	} catch {
-		ui.warn("Could not copy", "Read the code out instead.");
+		ui.warn("No se pudo copiar", "Dicta el código en su lugar.");
 	}
 }
 
 async function save() {
 	if (!form.value.customer_name.trim()) {
-		ui.warn("A customer name is required");
+		ui.warn("El nombre del cliente es obligatorio");
 		return;
 	}
 	saving.value = true;
@@ -121,7 +121,7 @@ async function save() {
 		ui.success(props.customerId ? "Cliente actualizado" : "Cliente creado", result.customer_name);
 		ui.closeModal();
 	} catch (error) {
-		ui.fail("Could not save the customer", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudo guardar el cliente", error instanceof Error ? error.message : String(error));
 	} finally {
 		saving.value = false;
 	}
@@ -245,20 +245,20 @@ async function save() {
 			     the code below is this customer's own, for them to pass on. -->
 			<label v-if="!props.customerId" class="block sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Referred by (code)
+					Referido por (código)
 				</span>
 				<input
 					v-model="form.referral_code"
 					type="text"
 					autocapitalize="characters"
-					placeholder="Optional"
+					placeholder="Opcional"
 					class="h-10 w-full rounded-card border-line bg-surface text-sm font-mono uppercase focus:border-accent focus:ring-0"
 				/>
 			</label>
 
 			<div v-if="ownReferralCode" class="sm:col-span-2">
 				<span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-subtle">
-					Their referral code
+					Su código de referido
 				</span>
 				<div class="flex items-center gap-2 rounded-card border border-line bg-surface-2 p-2">
 					<Gift class="size-4 shrink-0 text-violet" />
@@ -270,7 +270,7 @@ async function save() {
 						class="h-8 shrink-0 rounded-card border border-line bg-surface px-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent"
 						@click="copyCode"
 					>
-						{{ copied ? "Copied" : "Copy" }}
+						{{ copied ? "Copiado" : "Copiar" }}
 					</button>
 				</div>
 			</div>

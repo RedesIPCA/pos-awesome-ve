@@ -78,7 +78,7 @@ export const db = new PosDatabase();
 /** Raised when the queue cannot be written. Never swallowed — see enqueueInvoice. */
 export class StorageUnavailableError extends Error {
 	constructor(cause?: unknown) {
-		super("This terminal's offline storage is not available");
+		super("El almacenamiento sin conexión de esta terminal no está disponible");
 		this.name = "StorageUnavailableError";
 		this.cause = cause;
 	}

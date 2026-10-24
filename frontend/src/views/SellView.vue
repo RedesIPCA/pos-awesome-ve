@@ -49,7 +49,7 @@ watch(
 
 async function toPayment() {
 	if (cart.isEmpty || !cart.customer) {
-		ui.warn(cart.isEmpty ? "The cart is empty" : "Pick a customer first");
+		ui.warn(cart.isEmpty ? "El carrito está vacío" : "Selecciona un cliente primero");
 		return;
 	}
 	// Save first so taxes and discounts are settled before amounts are tendered —
@@ -68,42 +68,42 @@ async function toPayment() {
 }
 
 const stop = registerHotkeys([
-	{ combo: "F8", label: "Go to payment", group: "Sale", handler: toPayment },
+	{ combo: "F8", label: "Ir a cobrar", group: "Venta", handler: toPayment },
 	{
 		combo: "F4",
-		label: "Show offers",
-		group: "Sale",
+		label: "Mostrar ofertas",
+		group: "Venta",
 		handler: () => ui.setWorkspace(ui.workspace === "offers" ? "catalog" : "offers"),
 	},
 	{
 		combo: "F6",
-		label: "Show coupons",
-		group: "Sale",
+		label: "Mostrar cupones",
+		group: "Venta",
 		handler: () => ui.setWorkspace(ui.workspace === "coupons" ? "catalog" : "coupons"),
 	},
 	{
 		combo: "F3",
-		label: "Held invoices",
-		group: "Sale",
+		label: "Facturas en espera",
+		group: "Venta",
 		handler: () => ui.openModal("drafts"),
 	},
 	{
 		combo: "shift+F3",
-		label: "Return against an invoice",
-		group: "Sale",
+		label: "Devolución contra una factura",
+		group: "Venta",
 		handler: () => ui.openModal("returns"),
 	},
 	{
 		combo: "Escape",
-		label: "Back to items",
-		group: "Sale",
+		label: "Volver a los productos",
+		group: "Venta",
 		handler: () => {
 			if (ui.modal) ui.closeModal();
 			else if (ui.workspace !== "catalog") ui.setWorkspace("catalog");
 			else catalog.clearFilters();
 		},
 	},
-	{ combo: "shift+F12", label: "Clear the cart", group: "Sale", handler: () => cart.reset() },
+	{ combo: "shift+F12", label: "Vaciar el carrito", group: "Venta", handler: () => cart.reset() },
 ]);
 onUnmounted(stop);
 </script>

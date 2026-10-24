@@ -30,6 +30,9 @@ const session = useSessionStore();
 /** Round-number shortcuts a cashier actually reaches for. */
 const QUICK = [5, 10, 20, 50, 100, 200, 500];
 
+/** Display-only names for the credit kinds; the raw value is what the logic uses. */
+const CREDIT_TYPE_LABELS: Record<string, string> = { Invoice: "Nota de crédito", Advance: "Anticipo" };
+
 const done = computed(() => !!payments.lastInvoice);
 /** A sale parked on the terminal: real to the customer, not yet on the server. */
 const queued = computed(() => !!payments.lastInvoice?.__queued);
@@ -128,18 +131,18 @@ function openMpesa() {
 			</span>
 			<div>
 				<h2 class="text-lg font-semibold">
-					{{ queued ? "Saved on this terminal" : isReturn ? "Refund complete" : "Sale complete" }}
+					{{ queued ? "Guardada en esta terminal" : isReturn ? "Reembolso completado" : "Venta completada" }}
 				</h2>
 				<p v-if="queued" class="mx-auto mt-1 max-w-[19rem] text-xs text-muted">
-					There is no connection, so this sale is waiting on the till. It sends itself as
-					soon as the network is back — take the money and hand over the goods.
+					No hay conexión, así que esta venta queda en espera en la caja. Se envía sola en
+					cuanto vuelva la red: recibe el dinero y entrega la mercancía.
 				</p>
 				<p v-else class="mt-0.5 font-mono text-xs text-subtle">{{ payments.lastInvoice?.name }}</p>
 			</div>
 
 			<div v-if="payments.change > 0" class="panel bg-surface-2 px-6 py-4">
 				<p class="text-xs font-medium uppercase tracking-wide text-subtle">
-					{{ isReturn ? "Over-refunded" : "Change due" }}
+					{{ isReturn ? "Reembolso en exceso" : "Vuelto a entregar" }}
 				</p>
 				<p class="mt-0.5 text-3xl font-bold tnum text-warning">{{ formatCurrency(payments.change) }}</p>
 				<p v-if="changeEq" class="mt-1 text-xs tnum text-subtle">≈ {{ changeEq }}</p>
@@ -152,17 +155,17 @@ function openMpesa() {
 					@click="nextSale"
 				>
 					<Plus class="size-4" />
-					New sale
+					Nueva venta
 				</button>
 				<button
 					type="button"
 					class="flex h-11 items-center justify-center gap-2 rounded-card border border-line font-medium text-muted transition hover:bg-surface-2 hover:text-fg disabled:cursor-not-allowed disabled:opacity-45"
 					:disabled="queued"
-					:title="queued ? 'Available once the sale has been sent' : undefined"
+					:title="queued ? 'Disponible cuando se haya enviado la venta' : undefined"
 					@click="print"
 				>
 					<Printer class="size-4" />
-					Print receipt
+					Imprimir recibo
 				</button>
 			</div>
 		</div>
@@ -173,15 +176,15 @@ function openMpesa() {
 				<button
 					type="button"
 					class="grid size-9 place-items-center rounded-card text-muted transition hover:bg-surface-2 hover:text-fg"
-					aria-label="Back to catalog"
+					aria-label="Volver al catálogo"
 					@click="back"
 				>
 					<ArrowLeft class="size-4.5" />
 				</button>
-				<h2 class="text-sm font-semibold">{{ isReturn ? "Refund" : "Payment" }}</h2>
+				<h2 class="text-sm font-semibold">{{ isReturn ? "Reembolso" : "Pago" }}</h2>
 				<span class="ml-auto text-right">
 					<span class="block text-[11px] uppercase tracking-wide text-subtle">
-						{{ isReturn ? "Refund due" : "Due" }}
+						{{ isReturn ? "Reembolso pendiente" : "Por pagar" }}
 					</span>
 					<span
 						class="block text-lg font-bold tnum leading-tight"
@@ -244,9 +247,9 @@ function openMpesa() {
 						<Coins class="size-4" />
 					</span>
 					<label class="min-w-0 flex-1 text-sm font-medium" for="loyalty-redeem">
-						Redeem loyalty
+						Canjear puntos de lealtad
 						<span class="block text-[11px] font-normal text-subtle">
-							{{ formatFloat(cart.customerInfo?.loyalty_points ?? 0, 0) }} pts available ·
+							{{ formatFloat(cart.customerInfo?.loyalty_points ?? 0, 0) }} pts disponibles ·
 							{{ formatCurrency(cart.maxLoyaltyAmount) }}
 						</span>
 					</label>
@@ -269,10 +272,10 @@ function openMpesa() {
 							<WalletCards class="size-4" />
 						</span>
 						<div class="min-w-0 flex-1">
-							<p class="text-sm font-medium">Customer credit</p>
+							<p class="text-sm font-medium">Crédito del cliente</p>
 							<p class="text-[11px] text-subtle">
-								{{ formatCurrency(payments.creditAvailable) }} available ·
-								{{ formatCurrency(payments.creditApplied) }} applied
+								{{ formatCurrency(payments.creditAvailable) }} disponible ·
+								{{ formatCurrency(payments.creditApplied) }} aplicado
 							</p>
 						</div>
 						<button
@@ -280,7 +283,7 @@ function openMpesa() {
 							class="h-8 rounded-card border border-info px-2.5 text-xs font-semibold text-info transition hover:opacity-85"
 							@click="payments.applyMaxCredit()"
 						>
-							Use max
+							Usar máximo
 						</button>
 						<button
 							v-if="payments.creditApplied > 0"
@@ -288,7 +291,7 @@ function openMpesa() {
 							class="h-8 rounded-card px-2 text-xs font-medium text-subtle transition hover:text-danger"
 							@click="payments.clearCredit()"
 						>
-							Clear
+							Limpiar
 						</button>
 					</div>
 
@@ -298,7 +301,7 @@ function openMpesa() {
 						class="flex items-center gap-2 ps-11"
 					>
 						<label class="min-w-0 flex-1 truncate text-xs" :for="`credit-${row.credit_origin}`">
-							<span class="font-medium">{{ row.type }}</span>
+							<span class="font-medium">{{ CREDIT_TYPE_LABELS[row.type] ?? row.type }}</span>
 							<span class="ms-1 font-mono text-subtle">{{ row.credit_origin }}</span>
 							<span class="ms-1 tnum text-subtle">· {{ formatCurrency(row.total_credit) }}</span>
 						</label>
@@ -327,13 +330,13 @@ function openMpesa() {
 					</span>
 					<span class="min-w-0 flex-1">
 						<span class="block text-sm font-medium">M-Pesa</span>
-						<span class="block text-[11px] text-subtle">Match a transaction the customer has paid</span>
+						<span class="block text-[11px] text-subtle">Asocia una transacción que el cliente ya pagó</span>
 					</span>
 				</button>
 
 				<!-- Quick cash -->
 				<div>
-					<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">Quick add</p>
+					<p class="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-subtle">Agregar rápido</p>
 					<div class="flex flex-wrap gap-1.5">
 						<button
 							v-for="amount in QUICK"
@@ -349,14 +352,14 @@ function openMpesa() {
 							class="h-9 rounded-card border border-accent bg-accent-soft px-3 text-sm font-semibold text-accent transition hover:opacity-85"
 							@click="payments.tenderExact()"
 						>
-							Exact
+							Exacto
 						</button>
 						<button
 							type="button"
 							class="h-9 rounded-card border border-line px-3 text-sm font-medium text-muted transition hover:bg-surface-2"
 							@click="payments.clear()"
 						>
-							Clear
+							Limpiar
 						</button>
 					</div>
 				</div>
@@ -369,7 +372,7 @@ function openMpesa() {
 					<span class="font-semibold tnum">{{ formatCurrency(Math.abs(payments.igtf)) }}</span>
 				</div>
 				<div class="flex justify-between text-sm">
-					<span class="text-muted">{{ isReturn ? "Refunded" : "Tendered" }}</span>
+					<span class="text-muted">{{ isReturn ? "Reembolsado" : "Recibido" }}</span>
 					<span class="font-semibold tnum">{{ formatCurrency(Math.abs(payments.paid)) }}</span>
 				</div>
 				<div class="flex justify-between text-sm">
@@ -377,11 +380,11 @@ function openMpesa() {
 						{{
 							payments.outstanding > 0
 								? isReturn
-									? "Still to refund"
-									: "Still owed"
+									? "Falta por reembolsar"
+									: "Falta por cobrar"
 								: isReturn
-									? "Over-refunded"
-									: "Change"
+									? "Reembolso en exceso"
+									: "Vuelto"
 						}}
 					</span>
 					<span
@@ -405,11 +408,11 @@ function openMpesa() {
 					{{
 						payments.submitting
 							? isReturn
-								? "Refunding…"
-								: "Completing…"
+								? "Reembolsando…"
+								: "Completando…"
 							: isReturn
-								? "Complete refund"
-								: "Complete sale"
+								? "Completar reembolso"
+								: "Completar venta"
 					}}
 				</button>
 			</footer>

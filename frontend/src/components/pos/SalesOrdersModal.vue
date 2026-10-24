@@ -19,6 +19,13 @@ const searching = ref(false);
 const searched = ref(false);
 const loadingOrder = ref<string | null>(null);
 
+/** Display-only names for the server's billing status; the raw value is never sent back. */
+const BILLING_STATUS_LABELS: Record<string, string> = {
+	"Not Billed": "Sin facturar",
+	"Partly Billed": "Parcialmente facturado",
+	"Fully Billed": "Facturado",
+};
+
 async function search() {
 	searching.value = true;
 	try {
@@ -30,7 +37,7 @@ async function search() {
 			})) as Record<string, unknown>[]) ?? [];
 		searched.value = true;
 	} catch (error) {
-		ui.fail("Search failed", error instanceof Error ? error.message : String(error));
+		ui.fail("La búsqueda falló", error instanceof Error ? error.message : String(error));
 	} finally {
 		searching.value = false;
 	}
@@ -42,9 +49,9 @@ async function bill(order: Record<string, unknown>) {
 		const invoice = (await api.invoiceFromOrder(order.name as string)) as Record<string, unknown>;
 		cart.loadFromDoc(invoice);
 		ui.closeModal();
-		ui.success("Order loaded", order.name as string);
+		ui.success("Pedido cargado", order.name as string);
 	} catch (error) {
-		ui.fail("Could not bill the order", error instanceof Error ? error.message : String(error));
+		ui.fail("No se pudo facturar el pedido", error instanceof Error ? error.message : String(error));
 	} finally {
 		loadingOrder.value = null;
 	}
@@ -53,8 +60,8 @@ async function bill(order: Record<string, unknown>) {
 
 <template>
 	<ModalShell
-		title="Sales orders"
-		subtitle="Unbilled and partly billed orders"
+		title="Pedidos de venta"
+		subtitle="Pedidos sin facturar y parcialmente facturados"
 		width="max-w-xl"
 		@close="ui.closeModal()"
 	>
@@ -64,7 +71,7 @@ async function bill(order: Record<string, unknown>) {
 				<input
 					v-model="term"
 					type="search"
-					placeholder="Order number, or leave blank for recent"
+					placeholder="Número de pedido, o déjalo en blanco para ver los recientes"
 					class="h-11 w-full rounded-card border-line bg-surface pl-9 text-sm shadow-xs focus:border-accent focus:ring-0"
 				/>
 			</div>
@@ -74,13 +81,13 @@ async function bill(order: Record<string, unknown>) {
 				:disabled="searching"
 			>
 				<Loader2 v-if="searching" class="size-4 animate-spin" />
-				<span v-else>Search</span>
+				<span v-else>Buscar</span>
 			</button>
 		</form>
 
 		<div v-if="!rows.length" class="flex flex-col items-center gap-2 p-10 text-center">
 			<ClipboardList class="size-8 text-subtle" />
-			<p class="text-sm font-medium">{{ searched ? "No open order found" : "Search for an order" }}</p>
+			<p class="text-sm font-medium">{{ searched ? "No se encontró ningún pedido abierto" : "Busca un pedido" }}</p>
 		</div>
 
 		<ul v-else class="divide-y divide-line">
@@ -94,7 +101,7 @@ async function bill(order: Record<string, unknown>) {
 					<span class="min-w-0 flex-1">
 						<span class="block truncate text-sm font-medium">{{ row.customer_name || row.customer }}</span>
 						<span class="block truncate font-mono text-[11px] text-subtle">
-							{{ row.name }} · {{ formatDate(row.transaction_date as string) }} · {{ row.billing_status }}
+							{{ row.name }} · {{ formatDate(row.transaction_date as string) }} · {{ BILLING_STATUS_LABELS[row.billing_status as string] ?? row.billing_status }}
 						</span>
 					</span>
 					<Loader2 v-if="loadingOrder === row.name" class="size-4 shrink-0 animate-spin text-accent" />
