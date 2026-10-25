@@ -109,11 +109,13 @@ onUnmounted(stop);
 </script>
 
 <template>
+	<!-- En pantallas menores a lg (tablets chicas) el pago, las ofertas y los cupones ocupan todo el ancho
+	     y el carrito se oculta mientras tanto; antes se ocultaba justo el panel de pago y Cobrar parecia no hacer nada. -->
 	<div class="grid h-full min-h-0 grid-cols-1 gap-3 p-3 lg:grid-cols-12">
 		<!-- Left 5/12 — items, offers, coupons or payment -->
 		<div
 			class="min-h-0 lg:col-span-5"
-			:class="ui.workspace !== 'catalog' && 'max-lg:hidden'"
+			:class="ui.workspace !== 'catalog' && 'max-lg:col-span-full'"
 		>
 			<Transition
 				mode="out-in"
@@ -130,7 +132,7 @@ onUnmounted(stop);
 		</div>
 
 		<!-- Right 7/12 — the invoice, always on screen -->
-		<div class="min-h-0 lg:col-span-7" :class="ui.workspace !== 'catalog' && 'max-lg:col-span-full'">
+		<div class="min-h-0 lg:col-span-7" :class="ui.workspace !== 'catalog' && 'max-lg:hidden'">
 			<CartPanel @pay="toPayment" />
 		</div>
 
