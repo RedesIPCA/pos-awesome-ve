@@ -26,6 +26,9 @@ website_route_rules = [
 	{"from_route": "/posawesome/<path:app_path>", "to_route": "posawesome"},
 ]
 
+# Service worker del POS en /posawesome-sw.js (ver renderers.py): permite abrir el POS sin internet.
+page_renderer = ["posawesome.renderers.ServiceWorkerPage"]
+
 # ------------------------------------------------------------------------------
 # Installation
 # ------------------------------------------------------------------------------

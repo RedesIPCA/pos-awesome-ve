@@ -15,6 +15,9 @@ La licencia es la del proyecto original (GPL-3.0).
 | Arqueo de caja por moneda: el cierre espera, cuenta y compara los dólares en dólares. | `views/CloseShiftView.vue`, `posawesome/api/shift.py` |
 | El vuelto ya no se envía como anticipo del cliente (`credit_change`), que lo duplicaba. En una devolución el monto por forma de pago se limita a lo adeudado. | `stores/payments.ts` |
 | Campos `ve_*` creados al instalar y al migrar, y `setup_pos_ve(empresa)` para dejar una empresa lista. | `posawesome/install.py`, `posawesome/ve_setup.py` |
+| Interfaz en español (todo el texto visible; fechas es-VE). | `frontend/src/**` |
+| **Sin conexión**: la pantalla del POS se guarda en la terminal (service worker servido en `/posawesome-sw.js`), el catálogo y los clientes quedan en IndexedDB, y las ventas se encolan y se envían solas al volver la red. El servidor reenvía la factura completa (pagos y divisas) y aplica el IGTF. | `vite.config.ts`, `src/main.ts`, `src/lib/db.ts`, `posawesome/renderers.py`, `posawesome/api/offline.py` |
+| `crear_cajeros(cajeros, perfiles)`: usuarios cajeros con enlace de un solo uso para fijar su clave. | `posawesome/ve_setup.py` |
 
 ## Instalar en un cliente nuevo
 
@@ -64,3 +67,11 @@ git merge upstream/main        # revisar conflictos en los archivos de la tabla;
 - Si el cliente entrega en divisa menos que el precio e incluye en esa misma entrega el IGTF, la base
   del impuesto se calcula sobre todo lo entregado (diferencia de centavos). Se evita con **Exacto**.
 - El datáfono y la impresora fiscal no están integrados (ver la hoja de ruta de hardware del proyecto).
+
+## Sin conexión: cómo funciona y qué no cubre
+
+- Requiere la opción *posa_allow_offline_mode* en el POS Profile (`setup_pos_ve` la activa).
+- La terminal debe abrir el POS **con red al menos una vez** (y tener el turno abierto): así guarda la pantalla, el catálogo, los clientes, la tasa de cambio y la tasa del IGTF.
+- Sin red se puede vender a clientes ya guardados en la terminal, cobrar en cualquier moneda y el IGTF se calcula igual. La venta queda en cola y se envía al volver la red; el servidor la emite con los pagos y el IGTF.
+- No funciona sin red: abrir o cerrar turno, crear clientes nuevos, poner una factura en espera, imprimir el comprobante desde el servidor, ni ver créditos/anticipos del cliente.
+- Para probar: abrir el POS con red, activar el modo avión (o DevTools → Network → Offline), vender, y desactivarlo: la cola debe vaciarse sola.

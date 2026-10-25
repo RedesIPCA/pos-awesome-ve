@@ -110,6 +110,15 @@ export async function isStorageUsable(): Promise<boolean> {
 	return storageUsable;
 }
 
+/**
+ * IndexedDB solo guarda datos "planos". Lo que sale de un store de Pinia es un Proxy reactivo (con
+ * objetos anidados tambien reactivos) y la estructura de clonado del navegador lo rechaza con
+ * DataCloneError: el catalogo no se guardaba y una venta sin conexion no podia ponerse en cola.
+ */
+function plain<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value)) as T;
+}
+
 async function guard<T>(work: () => Promise<T>, fallback: T): Promise<T> {
 	if (!(await isStorageUsable())) return fallback;
 	try {
@@ -134,7 +143,7 @@ function itemHaystack(item: Item): string {
 export async function cacheItems(profile: string, items: Item[]): Promise<void> {
 	await guard(async () => {
 		const now = Date.now();
-		const rows: CachedItem[] = items.map((item) => ({
+		const rows: CachedItem[] = plain(items).map((item) => ({
 			...item,
 			key: `${profile}::${item.item_code}`,
 			profile,
@@ -156,7 +165,7 @@ export async function readCachedItems(profile: string): Promise<Item[]> {
 export async function cacheCustomers(profile: string, customers: Customer[]): Promise<void> {
 	await guard(async () => {
 		const now = Date.now();
-		const rows: CachedCustomer[] = customers.map((customer) => ({
+		const rows: CachedCustomer[] = plain(customers).map((customer) => ({
 			...customer,
 			key: `${profile}::${customer.name}`,
 			profile,
@@ -198,7 +207,7 @@ export async function cacheStamp(kind: "items" | "customers", profile: string): 
 export async function enqueueInvoice(entry: QueuedInvoice): Promise<void> {
 	if (!(await isStorageUsable())) throw new StorageUnavailableError();
 	try {
-		await db.queue.put(entry);
+		await db.queue.put(plain(entry));
 	} catch (error) {
 		throw new StorageUnavailableError(error);
 	}
@@ -244,7 +253,7 @@ export async function readMeta<T>(key: string): Promise<T | null> {
 }
 
 export async function writeMeta(key: string, value: unknown): Promise<void> {
-	await guard(() => db.meta.put({ key, value, updated_at: Date.now() }), undefined);
+	await guard(() => db.meta.put({ key, value: plain(value), updated_at: Date.now() }), undefined);
 }
 
 export async function clearProfileCache(profile: string): Promise<void> {

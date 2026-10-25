@@ -34,12 +34,30 @@ export default defineConfig({
 				],
 			},
 			workbox: {
-				globPatterns: ["**/*.{js,css,woff2}"],
+				globPatterns: ["**/*.{js,css,woff2,png,webmanifest}"],
+				// El sw.js se sirve desde /posawesome-sw.js (otra carpeta): sus URLs deben ser absolutas y el
+				// runtime de workbox va dentro del mismo archivo.
+				modifyURLPrefix: { "": "/assets/posawesome/posawesome/" },
+				inlineWorkboxRuntime: true,
 				// The shell is cached; every /api call falls through to the network and is
 				// handled by our own offline queue instead of by workbox.
 				navigateFallback: null,
 				navigateFallbackDenylist: [/^\/api/, /^\/app/, /^\/assets/],
 				runtimeCaching: [
+					{
+						// La pantalla del POS (/posawesome y sus rutas) se guarda en cada visita con
+						// red: si la tablet se reinicia o recarga SIN internet, la app abre desde aqui.
+						// Con red se pide siempre al servidor (token CSRF y usuario frescos); si tarda
+						// mas de 3 s o no hay red, se usa la ultima copia.
+						urlPattern: ({ request, url }: { request: Request; url: URL }) =>
+							request.mode === "navigate" && url.pathname.startsWith("/posawesome"),
+						handler: "NetworkFirst",
+						options: {
+							cacheName: "posa-shell",
+							networkTimeoutSeconds: 3,
+							expiration: { maxEntries: 10 },
+						},
+					},
 					{
 						urlPattern: /\/files\/.*\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/,
 						handler: "CacheFirst",

@@ -132,10 +132,14 @@ def _asignar_a_perfil(perfil, nombres, estado):
 	nuevas = [n for n in nombres if n not in presentes]
 	for nombre in nuevas:
 		doc.append("payments", {"mode_of_payment": nombre})
+	# Modo sin conexion: catalogo y clientes en la terminal, ventas en cola que se envian al volver la red.
+	cambio_offline = not doc.get("posa_allow_offline_mode")
+	if cambio_offline:
+		doc.posa_allow_offline_mode = 1
 	cambio_estado = bool(estado) and not doc.get("ve_estado")
 	if cambio_estado:
 		doc.ve_estado = estado
-	if not (nuevas or cambio_estado):
+	if not (nuevas or cambio_estado or cambio_offline):
 		return False
 	if doc.payments and not any(fila.default for fila in doc.payments):
 		doc.payments[0].default = 1

@@ -84,7 +84,9 @@ def _sync_one(uuid, entry):
 			invoice_data["name"] = existing_draft
 
 	draft = update_invoice(invoice_data)
-	result = submit_invoice({"name": draft.name}, submit_data)
+	# Igual que una venta en linea: submit_invoice recibe la factura COMPLETA (pagos, divisas) y no solo
+	# su nombre; con solo el nombre la factura se emitia sin pagos y con saldo pendiente.
+	result = submit_invoice({**invoice_data, "name": draft.name}, submit_data)
 
 	return {"uuid": uuid, "status": "synced", "name": result.get("name"), "docstatus": result.get("status")}
 
