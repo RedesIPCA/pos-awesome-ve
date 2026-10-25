@@ -185,7 +185,7 @@ def crear_cajeros(cajeros, perfiles, roles=None):
 				}
 			)
 			user.insert(ignore_permissions=True)
-			resumen["creados"][email] = user.reset_password(send_email=False)
+			resumen["creados"][email] = user._reset_password(send_email=False).replace("http://", "https://")
 		presentes = {fila.role for fila in user.roles}
 		faltan = [r for r in roles if r not in presentes]
 		for rol in faltan:
