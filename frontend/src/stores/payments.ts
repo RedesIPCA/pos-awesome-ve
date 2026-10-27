@@ -129,7 +129,10 @@ export const usePaymentsStore = defineStore("payments", () => {
 				// pedimos no existe, ERPNext devuelve 0: invertimos la tasa contraria.
 				if (!rate) {
 					const inverse = toNumber(await api.exchangeRate(session.currency, currency));
-					if (inverse) rate = money(1 / inverse);
+					// Sin money(): la tasa inversa es < 1 (ej. 1/887 = 0,001127) y money redondea
+					// a 2 decimales (currencyPrecision) -> la dejaria en 0. La precision de la
+					// division se conserva aqui; money solo se aplica a los montos finales.
+					if (inverse) rate = 1 / inverse;
 				}
 				next[currency] = rate;
 			}
