@@ -41,17 +41,10 @@ const isReturn = computed(() => cart.isReturn);
 onMounted(() => void payments.loadRates());
 
 const fx = (n: number) => n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const SYMBOL: Record<string, string> = { USD: "$", EUR: "€" };
-/** "$ 3,42 · € 3,05" para un monto en moneda local; vacio si aun no hay tasas. */
-function eq(local: number): string {
-	return ["USD", "EUR"]
-		.filter((c) => payments.rateOf(c) > 0)
-		.map((c) => `${SYMBOL[c]} ${fx(payments.equivalent(local, c))}`)
-		.join(" · ");
-}
-const dueEq = computed(() => eq(payments.payable));
-const changeEq = computed(() => eq(payments.change));
-const leftEq = computed(() => eq(payments.outstanding > 0 ? payments.outstanding : payments.change));
+/** Equivalente en la otra moneda (base USD -> Bs; base VES -> $/€); vacio si aun no hay tasas. */
+const dueEq = computed(() => payments.equivalentText(payments.payable));
+const changeEq = computed(() => payments.equivalentText(payments.change));
+const leftEq = computed(() => payments.equivalentText(payments.outstanding > 0 ? payments.outstanding : payments.change));
 
 /** Credit only shows when the profile allows it and the customer actually has some. */
 const canUseCredit = computed(
@@ -213,7 +206,7 @@ function openMpesa() {
 								class="block text-[11px] font-normal tnum text-subtle"
 							>
 								{{ payments.currencyOf(row.mode_of_payment) }} · tasa
-								{{ fx(payments.rateOf(payments.currencyOf(row.mode_of_payment))) }}
+								{{ fx(payments.humanRate(payments.currencyOf(row.mode_of_payment))) }}
 								<template v-if="row.foreign"> · = {{ formatCurrency(Math.abs(row.amount)) }}</template>
 							</span>
 						</label>

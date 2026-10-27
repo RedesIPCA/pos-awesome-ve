@@ -13,15 +13,11 @@ const payments = usePaymentsStore();
 
 onMounted(() => void payments.loadRates());
 
-/** Total en USD y EUR a la tasa del dia (solo informativo). */
-const eqTotal = computed(() =>
-	[["USD", "$"], ["EUR", "€"]]
-		.filter(([c]) => payments.rateOf(c) > 0)
-		.map(([c, s]) => `${s} ${payments.equivalent(cart.payableAmount, c).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-		.join(" · "),
-);
-
 const t = computed(() => cart.totals);
+
+/** Equivalente en la otra moneda a la tasa del dia (base USD -> Bs; base VES -> $/€). */
+const eqTotal = computed(() => payments.equivalentText(cart.payableAmount));
+const eqSubtotal = computed(() => payments.equivalentText(t.value.total));
 const canDiscount = computed(() => !!session.profile?.posa_allow_user_to_edit_additional_discount);
 const usePercentage = computed(() => !!session.profile?.posa_use_percentage_discount);
 
@@ -43,6 +39,8 @@ function commit(event: Event) {
 			<span>Subtotal <span class="text-subtle">({{ formatFloat(t.totalQty) }} cant.)</span></span>
 			<span class="tnum">{{ formatCurrency(t.total) }}</span>
 		</div>
+
+		<p v-if="eqSubtotal" class="-mt-1 text-right text-[11px] tnum text-subtle">≈ {{ eqSubtotal }}</p>
 
 		<div v-if="t.itemDiscountTotal > 0" class="flex justify-between text-success">
 			<span>Descuentos por producto</span>

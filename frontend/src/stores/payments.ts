@@ -71,6 +71,33 @@ export const usePaymentsStore = defineStore("payments", () => {
 		const rate = rateOf(currency);
 		return rate > 0 ? money(Math.abs(local) / rate) : 0;
 	}
+	/** Simbolo corto de cada moneda para los equivalentes en pantalla. */
+	const SYMBOLS: Record<string, string> = { USD: "$", EUR: "€", VES: "Bs" };
+	function symbolOf(currency: string): string {
+		return SYMBOLS[currency] ?? currency;
+	}
+	/** Tasa en la orientacion que el cajero conoce (unidades grandes por 1 chica), ej. 886,23. */
+	function humanRate(currency: string): number {
+		const rate = rateOf(currency);
+		if (!rate) return 0;
+		return rate >= 1 ? rate : money(1 / rate);
+	}
+	/** Monedas distintas a la local con tasa del dia (para mostrar equivalentes). */
+	const altCurrencies = computed(() =>
+		Object.keys(rates.value).filter((c) => c !== session.currency && rateOf(c) > 0),
+	);
+	/** Equivalente de un monto local en las demas monedas, ej. "Bs 44.311,36" o "$ 3,42 · € 3,05". */
+	function equivalentText(local: number): string {
+		return altCurrencies.value
+			.map(
+				(c) =>
+					`${symbolOf(c)} ${equivalent(local, c).toLocaleString("es-VE", {
+						minimumFractionDigits: 2,
+						maximumFractionDigits: 2,
+					})}`,
+			)
+			.join(" · ");
+	}
 	async function loadRates(force = false) {
 		const fresh = Date.now() - ratesLoadedAt < 15 * 60 * 1000;
 		if (!force && fresh && Object.keys(rates.value).length) return;
@@ -97,7 +124,14 @@ export const usePaymentsStore = defineStore("payments", () => {
 			wanted.delete(session.currency);
 			const next: Record<string, number> = {};
 			for (const currency of wanted) {
-				next[currency] = toNumber(await api.exchangeRate(currency, session.currency));
+				let rate = toNumber(await api.exchangeRate(currency, session.currency));
+				// Currency Exchange solo guarda una direccion (ej. USD->VES). Si la que
+				// pedimos no existe, ERPNext devuelve 0: invertimos la tasa contraria.
+				if (!rate) {
+					const inverse = toNumber(await api.exchangeRate(session.currency, currency));
+					if (inverse) rate = money(1 / inverse);
+				}
+				next[currency] = rate;
 			}
 			modeCurrency.value = map;
 			rates.value = next;
@@ -344,7 +378,7 @@ export const usePaymentsStore = defineStore("payments", () => {
 			.filter((row) => Math.abs(row.foreign) > 0)
 			.map((row) => {
 				const currency = currencyOf(row.mode_of_payment);
-				return `${row.mode_of_payment}: ${Math.abs(row.foreign).toFixed(2)} ${currency} @ ${rateOf(currency)} = ${Math.abs(row.amount).toFixed(2)} ${session.currency}`;
+				return `${row.mode_of_payment}: ${Math.abs(row.foreign).toFixed(2)} ${currency} @ ${humanRate(currency)} = ${Math.abs(row.amount).toFixed(2)} ${session.currency}`;
 			})
 			.join(" | ");
 		const invoice = {
@@ -365,7 +399,7 @@ export const usePaymentsStore = defineStore("payments", () => {
 						? {
 							  ve_moneda: currencyOf(row.mode_of_payment),
 							  ve_monto_divisa: row.foreign,
-							  ve_tasa: rateOf(currencyOf(row.mode_of_payment)),
+							  ve_tasa: humanRate(currencyOf(row.mode_of_payment)),
 						  }
 						: {}),
 				})),
@@ -529,6 +563,10 @@ export const usePaymentsStore = defineStore("payments", () => {
 		rateOf,
 		isForeign,
 		equivalent,
+		humanRate,
+		symbolOf,
+		altCurrencies,
+		equivalentText,
 		igtf,
 		igtfRate,
 		priceDue,

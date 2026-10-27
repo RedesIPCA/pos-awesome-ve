@@ -4,12 +4,17 @@ import { Minus, Plus, Tag, Trash2, Gift, StickyNote } from "lucide-vue-next";
 import { formatCurrency, formatFloat, toNumber } from "@/lib/format";
 import { useCartStore } from "@/stores/cart";
 import { useSessionStore } from "@/stores/session";
+import { usePaymentsStore } from "@/stores/payments";
 import type { CartItem } from "@/types";
 
 const props = defineProps<{ line: CartItem }>();
 
 const cart = useCartStore();
 const session = useSessionStore();
+const payments = usePaymentsStore();
+
+/** Importe de la linea en la otra moneda a la tasa del dia (base USD -> Bs). */
+const lineEq = computed(() => payments.equivalentText(props.line.amount));
 
 const selected = computed(() => cart.selectedRowId === props.line.posa_row_id);
 const bumped = computed(() => cart.bumped.has(props.line.posa_row_id));
@@ -64,6 +69,7 @@ function commitQty(event: Event) {
 
 			<div class="shrink-0 text-right">
 				<p class="text-sm font-bold tnum">{{ formatCurrency(line.amount) }}</p>
+					<p v-if="lineEq" class="text-[11px] tnum text-subtle">≈ {{ lineEq }}</p>
 				<p v-if="hasDiscount" class="text-[11px] tnum text-subtle line-through">
 					{{ formatCurrency(line.price_list_rate * line.qty) }}
 				</p>
