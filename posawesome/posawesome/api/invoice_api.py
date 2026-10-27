@@ -155,6 +155,15 @@ def submit_invoice(invoice, data):
 		total_cash = flt(doc.total) - flt(data.get("redeemed_customer_credit"))
 
 	is_payment_entry = _attach_advances(doc, data)
+
+	# Cobros en divisa distinta a la moneda base de la compania: el POS inline no
+	# admite tasa por fila (set_paid_amount fuerza base = amount * conversion_rate),
+	# asi que se saca la factura de is_pos y los cobros se asientan como Payment
+	# Entries multimoneda, con el saldo real en esa moneda en el mayor.
+	if _has_foreign_payment(doc):
+		doc.is_pos = 0
+		is_payment_entry = 1
+
 	payments = list(doc.payments)
 
 	# v16: flag rows so ERPNext materialises the Serial and Batch Bundle on submit.
@@ -297,7 +306,9 @@ def settle_customer_credit(doc, data, is_payment_entry, total_cash, cash_account
 	if data.get("redeemed_customer_credit"):
 		_knock_off_credit_invoices(doc, data)
 
-	if is_payment_entry and flt(total_cash) > 0:
+	# is_pos=0 (anticipos redimidos o cobro en divisa): el saldo de la factura se
+	# liquida con Payment Entries, uno por cada cobro recibido.
+	if is_payment_entry:
 		_book_cash_legs(doc, data, payments)
 
 
@@ -351,33 +362,86 @@ def _knock_off_credit_invoices(doc, data):
 		journal.submit()
 
 
+def _company_currency(company):
+	return frappe.get_cached_value("Company", company, "default_currency")
+
+
+def _pay_field(payment, field):
+	"""Read a field from a payment, whether it is a doc row or a serialised dict."""
+	if isinstance(payment, dict):
+		return payment.get(field)
+	return getattr(payment, field, None)
+
+
+def _payment_account(payment, company):
+	"""Resolve (account, account_currency) for a payment row."""
+	account = _pay_field(payment, "account") or get_bank_cash_account(
+		_pay_field(payment, "mode_of_payment"), company
+	).get("account")
+	if not account:
+		return account, _company_currency(company)
+	return account, frappe.get_cached_value("Account", account, "account_currency")
+
+
+def _has_foreign_payment(doc):
+	"""True si algun cobro va a una cuenta en moneda distinta a la base de la compania."""
+	company_currency = _company_currency(doc.company)
+	for payment in doc.payments:
+		if not flt(payment.amount):
+			continue
+		_account, currency = _payment_account(payment, doc.company)
+		if currency and currency != company_currency:
+			return True
+	return False
+
+
 def _book_cash_legs(doc, data, payments):
-	"""When advances took the invoice out of is_pos, book the tendered cash by hand."""
+	"""Asienta los cobros como Payment Entries cuando la factura sale de is_pos
+	(anticipos redimidos o cobro en divisa).
+
+	Un cobro en moneda distinta a la base de la compania se asienta como Payment
+	Entry multimoneda: el monto recibido va en esa moneda (ve_monto_divisa) y la
+	tasa del dia (ve_tasa) fija la equivalencia, de modo que la cuenta lleva su
+	saldo real en esa moneda en el mayor (debe/haber paralelo). `payment.amount`
+	ya esta en moneda base (lo calcula el POS), asi que es el monto en USD."""
+	company_currency = _company_currency(doc.company)
+	is_return = bool(getattr(doc, "is_return", 0))
+	remaining = abs(flt(doc.outstanding_amount) or flt(doc.rounded_total) or flt(doc.grand_total))
+
 	for payment in payments or []:
-		amount = flt(payment.get("amount") if isinstance(payment, dict) else payment.amount)
+		amount = flt(_pay_field(payment, "amount"))
 		if not amount:
 			continue
-		mode = payment.get("mode_of_payment") if isinstance(payment, dict) else payment.mode_of_payment
-		account = payment.get("account") if isinstance(payment, dict) else payment.account
+		mode = _pay_field(payment, "mode_of_payment")
+		account, account_currency = _payment_account(payment, doc.company)
+
+		base_amount = abs(amount)
+		allocated = min(base_amount, remaining) if remaining > 0 else base_amount
+		remaining = max(remaining - allocated, 0.0)
+
+		foreign = bool(account_currency and account_currency != company_currency)
+		received = abs(flt(_pay_field(payment, "ve_monto_divisa"))) or base_amount
+		ve_tasa = flt(_pay_field(payment, "ve_tasa"))
+		# Tasa de la divisa hacia la moneda base (USD por 1 Bs). Se calcula del monto
+		# para que el asiento cuadre exacto; si faltara, se usa 1/ve_tasa.
+		fx_rate = (base_amount / received) if (foreign and received) else (
+			(1.0 / ve_tasa) if (foreign and ve_tasa) else 1.0
+		)
 
 		entry = frappe.get_doc(
 			{
 				"doctype": "Payment Entry",
 				"posting_date": nowdate(),
-				"payment_type": "Receive",
+				"payment_type": "Pay" if is_return else "Receive",
 				"party_type": "Customer",
 				"party": doc.customer,
-				"paid_amount": amount,
-				"received_amount": amount,
-				"paid_from": doc.debit_to,
-				"paid_to": account,
 				"company": doc.company,
 				"mode_of_payment": mode,
 				"reference_no": doc.posa_pos_opening_shift,
 				"reference_date": nowdate(),
 				"references": [
 					{
-						"allocated_amount": amount,
+						"allocated_amount": -allocated if is_return else allocated,
 						"due_date": data.get("due_date"),
 						"reference_doctype": "Sales Invoice",
 						"reference_name": doc.name,
@@ -385,6 +449,35 @@ def _book_cash_legs(doc, data, payments):
 				],
 			}
 		)
+
+		if is_return:
+			# Reembolso: el dinero sale de la cuenta de cobro hacia el cliente.
+			entry.paid_from = account
+			entry.paid_to = doc.debit_to
+			if foreign:
+				entry.paid_from_account_currency = account_currency
+				entry.paid_amount = received       # Bs que salen
+				entry.source_exchange_rate = fx_rate
+				entry.received_amount = base_amount  # USD
+				entry.target_exchange_rate = 1
+			else:
+				entry.paid_amount = base_amount
+				entry.received_amount = base_amount
+		else:
+			entry.paid_from = doc.debit_to
+			entry.paid_to = account
+			if foreign:
+				# Si se deja target_exchange_rate vacio, ERPNext llama
+				# get_exchange_rate(VES, USD) que devuelve 0: hay que fijarlo.
+				entry.paid_to_account_currency = account_currency
+				entry.paid_amount = base_amount      # USD
+				entry.source_exchange_rate = 1
+				entry.received_amount = received      # Bs
+				entry.target_exchange_rate = fx_rate
+			else:
+				entry.paid_amount = base_amount
+				entry.received_amount = base_amount
+
 		entry.flags.ignore_permissions = True
 		frappe.flags.ignore_account_permission = True
 		entry.insert()

@@ -114,7 +114,7 @@ def get_pos_invoices(pos_opening_shift):
 
 @frappe.whitelist()
 def get_payments_entries(pos_opening_shift):
-    return frappe.get_all(
+    entries = frappe.get_all(
         "Payment Entry",
         filters={
             "docstatus": 1,
@@ -125,11 +125,24 @@ def get_payments_entries(pos_opening_shift):
             "name",
             "mode_of_payment",
             "paid_amount",
+            "received_amount",
+            "paid_to_account_currency",
+            "company",
             "reference_no",
             "posting_date",
             "party",
         ],
     )
+    # Para una forma de pago en divisa (cuenta en moneda != base), el arqueo debe
+    # esperar el monto en esa moneda (received_amount, p.ej. Bs), no el equivalente
+    # en la moneda base (paid_amount). recon_amount es lo que cuadra la gaveta.
+    for e in entries:
+        company_currency = frappe.get_cached_value("Company", e.get("company"), "default_currency")
+        if e.get("paid_to_account_currency") and e.get("paid_to_account_currency") != company_currency:
+            e["recon_amount"] = e.get("received_amount")
+        else:
+            e["recon_amount"] = e.get("paid_amount")
+    return entries
 
 
 @frappe.whitelist()
@@ -229,12 +242,13 @@ def make_closing_shift_from_opening(opening_shift):
     pos_payments = get_payments_entries(opening_shift.get("name"))
 
     for py in pos_payments:
+        recon_amount = py.get("recon_amount")
         pos_payments_table.append(
             frappe._dict(
                 {
                     "payment_entry": py.name,
                     "mode_of_payment": py.mode_of_payment,
-                    "paid_amount": py.paid_amount,
+                    "paid_amount": recon_amount,
                     "posting_date": py.posting_date,
                     "customer": py.party,
                 }
@@ -244,14 +258,14 @@ def make_closing_shift_from_opening(opening_shift):
             pay for pay in payments if pay.mode_of_payment == py.mode_of_payment
         ]
         if existing_pay:
-            existing_pay[0].expected_amount += flt(py.paid_amount)
+            existing_pay[0].expected_amount += flt(recon_amount)
         else:
             payments.append(
                 frappe._dict(
                     {
                         "mode_of_payment": py.mode_of_payment,
                         "opening_amount": 0,
-                        "expected_amount": py.paid_amount,
+                        "expected_amount": recon_amount,
                     }
                 )
             )
